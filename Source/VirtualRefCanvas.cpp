@@ -91,7 +91,7 @@ VirtualRefCanvas::VirtualRefCanvas(VirtualRef* n) :
 	channelCountLabel = new Label("ChanCountLabel", "# channels");
 	addAndMakeVisible(channelCountLabel);
 
-	for (int i=1; i<=32; i++)
+	for (int i=1; i<=8; i++)
 	{
 		channelCounts.add(String(i*16));
 	}
