@@ -70,6 +70,9 @@ VirtualRefCanvas::VirtualRefCanvas(VirtualRef* n) :
     gainSlider->setRange(0.0f, 2.0f);
     gainSlider->setTextBoxStyle(Slider::TextBoxRight, false, 50, 30);
     gainSlider->setValue(1.0f);
+	gainSlider->setColour(Slider::backgroundColourId, Colour(0, 0, 0));
+	gainSlider->setColour(Slider::rotarySliderFillColourId, Colour (240, 179, 12));
+	gainSlider->setColour(Slider::thumbColourId, Colour (240, 179, 12));
     gainSlider->addListener(this);
     addAndMakeVisible(gainSlider);
 
