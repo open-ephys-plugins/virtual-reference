@@ -147,62 +147,64 @@ float VirtualRef::getGlobalGain()
 
 void VirtualRef::saveCustomParametersToXml(XmlElement* xml)
 {
-	if(refMatMap[getEditor()->getCurrentStream()] == nullptr)
-		return;
-		
-	int numChannels = refMatMap[getEditor()->getCurrentStream()]->getNumberOfChannels();
-
     xml->setAttribute("Type", "VirtualRef");
+	xml->setAttribute("GlobalGain", getGlobalGain());
 
-    XmlElement* paramXml = xml->createNewChildElement("PARAMETERS");
-    paramXml->setAttribute("GlobalGain", getGlobalGain());
-	paramXml->setAttribute("NumChannels", numChannels);
+	for(auto stream : getDataStreams())
+	{
+		uint16 streamID = stream->getStreamId();
+		XmlElement* streamXml = xml->createNewChildElement("STREAM");
+		streamXml->setAttribute("ID", streamID);
 
-	XmlElement* channelsXml = xml->createNewChildElement("REFERENCES");
+		int numChannels = refMatMap[streamID]->getNumberOfChannels();
 
-    for (int i=0; i<numChannels; i++)
-    {
-		float* ref = refMatMap[getEditor()->getCurrentStream()]->getChannel(i);
- 
-        XmlElement* channelXml = channelsXml->createNewChildElement("CHANNEL");
-        channelXml->setAttribute("Index", i+1);
-		for (int j=0; j<numChannels; j++)
+		for (int i=0; i<numChannels; i++)
 		{
-			if (ref[j] > 0)
+			float* ref = refMatMap[streamID]->getChannel(i);
+ 
+			XmlElement* channelXml = streamXml->createNewChildElement("CHANNEL");
+			channelXml->setAttribute("Index", i+1);
+			for (int j=0; j<numChannels; j++)
 			{
-				XmlElement* refXml = channelXml->createNewChildElement("REFERENCE");
-				refXml->setAttribute("Index", j+1);
-				refXml->setAttribute("Value", ref[j]);
+				if (ref[j] > 0)
+				{
+					XmlElement* refXml = channelXml->createNewChildElement("REFERENCE");
+					refXml->setAttribute("Index", j+1);
+					refXml->setAttribute("Value", ref[j]);
+				}
 			}
 		}
-    }
+	}
 }
 
 void VirtualRef::loadCustomParametersFromXml(XmlElement* customParamsXml)
 {
-	forEachXmlChildElementWithTagName(*customParamsXml,	paramXml, "PARAMETERS")
-	{
-    	float globGain = (float)paramXml->getDoubleAttribute("GlobalGain");
-		setGlobalGain(globGain);
-	}
+    float globGain = (float)customParamsXml->getDoubleAttribute("GlobalGain", 1.0f);
+	setGlobalGain(globGain);
 
-    refMatMap[getEditor()->getCurrentStream()]->clear();
-	forEachXmlChildElementWithTagName(*customParamsXml,	channelsXml, "REFERENCES")
+	for(auto streamXml : customParamsXml->getChildWithTagNameIterator("STREAM"))
 	{
-		forEachXmlChildElementWithTagName(*channelsXml,	channelXml, "CHANNEL")
+		uint16 streamID = streamXml->getIntAttribute("ID");
+
+		if(streamID == 0 || refMatMap.find(streamID) == refMatMap.end())
+			continue;
+
+		refMatMap[streamID]->clear();
+		
+		for(auto channelXml : streamXml->getChildWithTagNameIterator("CHANNEL"))
 		{
 			int channelIndex = channelXml->getIntAttribute("Index");
 
-			forEachXmlChildElementWithTagName(*channelXml,	refXml, "REFERENCE")
+			for(auto refXml : channelXml->getChildWithTagNameIterator("REFERENCE"))
 			{
 				int refIndex = refXml->getIntAttribute("Index");
 				float gain = (float)refXml->getDoubleAttribute("Value");
-				refMatMap[getEditor()->getCurrentStream()]->setValue(channelIndex - 1, refIndex - 1, gain);
+				refMatMap[streamID]->setValue(channelIndex - 1, refIndex - 1, gain);
 			}
 		}
 	}
 
-	updateSettings();
+	getEditor()->updateVisualizer();
 }
 
 
