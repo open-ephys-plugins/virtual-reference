@@ -26,16 +26,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VirtualRef.h"
 
 
-VirtualRefEditor::VirtualRefEditor(GenericProcessor* parentNode, bool useDefaultParameterEditors=true)
-    : VisualizerEditor(parentNode, useDefaultParameterEditors), chanRefCanvas(nullptr)
+VirtualRefEditor::VirtualRefEditor(GenericProcessor* parentNode)
+    : VisualizerEditor(parentNode, "Virtual Ref", 180), chanRefCanvas(nullptr)
 {	
-    tabText = "Virtual Ref";
-    desiredWidth = 180;
+
 }
 
 VirtualRefEditor::~VirtualRefEditor()
 {
-	deleteAllChildren();
 }
 
 Visualizer* VirtualRefEditor::createNewCanvas()
@@ -44,14 +42,6 @@ Visualizer* VirtualRefEditor::createNewCanvas()
     VirtualRef* processor = (VirtualRef*) getProcessor();
 	chanRefCanvas = new VirtualRefCanvas(processor);
     return chanRefCanvas;
-}
-
-void VirtualRefEditor::updateSettings()
-{
-	if (chanRefCanvas != nullptr)
-	{
-		chanRefCanvas->update();
-	}
 }
 
 void VirtualRefEditor::saveParametersDialog()
@@ -70,7 +60,7 @@ void VirtualRefEditor::saveParametersDialog()
 			XmlElement* xml = new XmlElement("SETTINGS");
 			VirtualRef* p = dynamic_cast<VirtualRef*>(getProcessor());
 			p->saveCustomParametersToXml(xml);
-			if(!xml->writeToFile(fileToSave, String::empty))
+			if(!xml->writeToFile(fileToSave, String()))
 			{
 				CoreServices::sendStatusMessage("Couldn't save channel reference data to file.");
 			}
@@ -100,14 +90,18 @@ void VirtualRefEditor::loadParametersDialog()
             File fileToOpen = fc.getResult();
 
 			VirtualRef* p = dynamic_cast<VirtualRef*>(getProcessor());
-			p->parametersAsXml = XmlDocument::parse(fileToOpen);
-			p->loadCustomParametersFromXml();
+			auto fileXml = XmlDocument::parse(fileToOpen);
+			p->loadCustomParametersFromXml(fileXml.get());
 			CoreServices::sendStatusMessage("Loaded channel reference data from file." + fileToOpen.getFullPathName());
-			delete p->parametersAsXml;
         }
     } else
 	{
 		CoreServices::sendStatusMessage("Stop acquisition before loading channel references.");
     }
+}
+
+void VirtualRefEditor::selectedStreamHasChanged()
+{
+    updateVisualizer();
 }
 

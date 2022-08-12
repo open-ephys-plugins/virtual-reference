@@ -30,103 +30,109 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 VirtualRef::VirtualRef()
-    : GenericProcessor("Virtual Ref"), channelBuffer(1, BUFFER_SIZE), 
-avgBuffer(1, BUFFER_SIZE), globalGain(1.0f)
+    : GenericProcessor("Virtual Reference"),
+	  channelBuffer(1, BUFFER_SIZE),
+	  avgBuffer(1, BUFFER_SIZE),
+	  globalGain(1.0f)
 {
-    setProcessorType(PROCESSOR_TYPE_FILTER);
 
-	int nChannels = getNumInputs();
-	refMat = new ReferenceMatrix(nChannels);
 }
 
 VirtualRef::~VirtualRef()
 {
-	delete refMat;
 }
 
 AudioProcessorEditor* VirtualRef::createEditor()
 {
-    editor = new VirtualRefEditor(this, true);
-    return editor;
+    editor = std::make_unique<VirtualRefEditor>(this);
+    return editor.get();
 }
 
 
 
 void VirtualRef::updateSettings()
 {
-	int nChannels = getNumInputs();
+	for(auto stream : getDataStreams())
+	{
+		int numChannels = (stream->getChannelCount() > 128) ? 128 : stream->getChannelCount();
 
-	if (refMat == nullptr)
-	{
-		refMat = new ReferenceMatrix(nChannels);
-	}
-	else
-	{
-		refMat->setNumberOfChannels(nChannels);
-	}
+		refMatMap.emplace(stream->getStreamId(), std::make_unique<ReferenceMatrix>(numChannels));
 
-	if (editor != nullptr)
-	{
-		editor->updateSettings();
+		if (editor != nullptr)
+		{
+			editor->updateVisualizer();
+		}
 	}
 }
 
 
-void VirtualRef::setParameter(int parameterIndex, float newValue)
+void VirtualRef::process(AudioBuffer<float>& buffer)
 {
+	// loop through the streams
+    for (auto stream : getDataStreams())
+    {
 
-}
+		if ((*stream)["enable_stream"])
+        {
+			float* ref;
+			float refGain;
+			int numRefs;
+			int numChan = refMatMap[stream->getStreamId()]->getNumberOfChannels();
 
-void VirtualRef::process(AudioSampleBuffer& buffer)
-{
-	float* ref;
-	float refGain;
-	int numRefs;
-	int numChan = refMat->getNumberOfChannels();
+			channelBuffer = buffer;
 
-	channelBuffer = buffer;
-
-	for (int i=0; i<numChan; i++)
-	{
-		avgBuffer.clear();
-
-		ref = refMat->getChannel(i);
-		numRefs = 0;
-		for (int j=0; j<numChan; j++)
-		{
-			if (ref[j] > 0)
+			for (int i=0; i<numChan; i++)
 			{
-				numRefs++;
-			}
-		}
+				avgBuffer.clear();
 
-		for (int j=0; j<numChan; j++)
-		{
-			if (ref[j] > 0)
-			{
-				refGain = 1.0f / float(numRefs);
-				avgBuffer.addFrom(0, 0, channelBuffer, j, 0,
-								  channelBuffer.getNumSamples(), refGain);
-			}
-		}
-		
+				ref = refMatMap[stream->getStreamId()]->getChannel(i);
+				numRefs = 0;
+				for (int j=0; j<numChan; j++)
+				{
+					if (ref[j] > 0)
+					{
+						numRefs++;
+					}
+				}
 
-		if (numRefs > 0)
-		{
-			buffer.addFrom(i, 			// destChannel
-						0, 				// destStartSample
-						avgBuffer, 	// source
-						0,  			// sourceChannel
-						0, 				// sourceStartSample
-						buffer.getNumSamples(), // numSamples
-						-1.0f * globalGain);  // global gain to apply 
+				for (int j=0; j<numChan; j++)
+				{
+					if (ref[j] > 0)
+					{
+						refGain = 1.0f / float(numRefs);
+						int globalChanIndex = stream->getContinuousChannels()[j]->getGlobalIndex();
+						
+						avgBuffer.addFrom(0,
+										  0,
+										  channelBuffer,
+										  globalChanIndex,
+										  0,
+										  channelBuffer.getNumSamples(),
+										  refGain);
+					}
+				}
+				
+
+				if (numRefs > 0)
+				{
+					int globalChanIndex = stream->getContinuousChannels()[i]->getGlobalIndex();
+
+					buffer.addFrom(globalChanIndex,			// destChannel
+								   0,						// destStartSample
+								   avgBuffer,				// source
+								   0,						// sourceChannel
+								   0,						// sourceStartSample
+								   buffer.getNumSamples(),	// numSamples
+								   -1.0f * globalGain);		// global gain to apply 
+				}
+			}
 		}
 	}
 }
 
 ReferenceMatrix* VirtualRef::getReferenceMatrix()
 {
-	return refMat;
+	return refMatMap[getEditor()->getCurrentStream()].get();
 }
 
 void VirtualRef::setGlobalGain(float value)
@@ -141,7 +147,10 @@ float VirtualRef::getGlobalGain()
 
 void VirtualRef::saveCustomParametersToXml(XmlElement* xml)
 {
-	int numChannels = refMat->getNumberOfChannels();
+	if(refMatMap[getEditor()->getCurrentStream()] == nullptr)
+		return;
+		
+	int numChannels = refMatMap[getEditor()->getCurrentStream()]->getNumberOfChannels();
 
     xml->setAttribute("Type", "VirtualRef");
 
@@ -153,7 +162,7 @@ void VirtualRef::saveCustomParametersToXml(XmlElement* xml)
 
     for (int i=0; i<numChannels; i++)
     {
-		float* ref = refMat->getChannel(i);
+		float* ref = refMatMap[getEditor()->getCurrentStream()]->getChannel(i);
  
         XmlElement* channelXml = channelsXml->createNewChildElement("CHANNEL");
         channelXml->setAttribute("Index", i+1);
@@ -169,16 +178,16 @@ void VirtualRef::saveCustomParametersToXml(XmlElement* xml)
     }
 }
 
-void VirtualRef::loadCustomParametersFromXml()
+void VirtualRef::loadCustomParametersFromXml(XmlElement* customParamsXml)
 {
-	forEachXmlChildElementWithTagName(*parametersAsXml,	paramXml, "PARAMETERS")
+	forEachXmlChildElementWithTagName(*customParamsXml,	paramXml, "PARAMETERS")
 	{
     	float globGain = (float)paramXml->getDoubleAttribute("GlobalGain");
 		setGlobalGain(globGain);
 	}
 
-    refMat->clear();
-	forEachXmlChildElementWithTagName(*parametersAsXml,	channelsXml, "REFERENCES")
+    refMatMap[getEditor()->getCurrentStream()]->clear();
+	forEachXmlChildElementWithTagName(*customParamsXml,	channelsXml, "REFERENCES")
 	{
 		forEachXmlChildElementWithTagName(*channelsXml,	channelXml, "CHANNEL")
 		{
@@ -188,7 +197,7 @@ void VirtualRef::loadCustomParametersFromXml()
 			{
 				int refIndex = refXml->getIntAttribute("Index");
 				float gain = (float)refXml->getDoubleAttribute("Value");
-				refMat->setValue(channelIndex - 1, refIndex - 1, gain);
+				refMatMap[getEditor()->getCurrentStream()]->setValue(channelIndex - 1, refIndex - 1, gain);
 			}
 		}
 	}

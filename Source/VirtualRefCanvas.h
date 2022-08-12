@@ -33,7 +33,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class ElectrodeTableButton;
 class VirtualRefDisplay;
 
-class VirtualRefCanvas : public Visualizer, public Button::Listener, public ComboBox::Listener, public Slider::Listener
+class VirtualRefCanvas : public Visualizer,
+						 public Button::Listener,
+						 public ComboBox::Listener,
+						 public Slider::Listener
 {
 public:
 

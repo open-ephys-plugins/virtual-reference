@@ -51,15 +51,9 @@ public:
     VirtualRef();
     ~VirtualRef();
 
-    void process(AudioSampleBuffer& buffer);
-    void setParameter(int parameterIndex, float newValue);
+    void process(AudioBuffer<float>& buffer);
 
     AudioProcessorEditor* createEditor();
-
-    bool hasEditor() const
-    {
-        return true;
-    }
 
     void updateSettings();
 
@@ -69,13 +63,13 @@ public:
 	float getGlobalGain();
 
 	void saveCustomParametersToXml(XmlElement* parentElement);
-	void loadCustomParametersFromXml();
+	void loadCustomParametersFromXml(XmlElement* customParamsXml);
 
 private:
 
-	ReferenceMatrix* refMat;
-	AudioSampleBuffer channelBuffer;
-	AudioSampleBuffer avgBuffer;
+	std::map<uint16, std::unique_ptr<ReferenceMatrix>> refMatMap;
+	AudioBuffer<float> channelBuffer;
+	AudioBuffer<float> avgBuffer;
 	float globalGain;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VirtualRef);

@@ -41,19 +41,19 @@
 */
 
 class VirtualRefEditor : public VisualizerEditor,
-    public DragAndDropContainer
-
+                         public DragAndDropContainer
 {
 public:
 
-    VirtualRefEditor(GenericProcessor* parentNode, bool useDefaultParameterEditors);
+    VirtualRefEditor(GenericProcessor* parentNode);
     virtual ~VirtualRefEditor();
 
 	Visualizer* createNewCanvas();
-    void updateSettings();
 
     void saveParametersDialog();
     void loadParametersDialog();
+
+    void selectedStreamHasChanged() override;
 
     String writePrbFile(File filename);
     String loadPrbFile(File filename);
