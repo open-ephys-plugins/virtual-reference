@@ -34,41 +34,41 @@ VirtualRefCanvas::VirtualRefCanvas(VirtualRef* n) :
     processor(n)
 {
 
-    displayViewport = new Viewport("VirtualRefDisplay");
-	display = new VirtualRefDisplay(processor, this, displayViewport);
-	displayViewport->setViewedComponent(display, false);
+    displayViewport = std::make_unique<Viewport>("VirtualRefDisplay");
+	display = std::make_unique<VirtualRefDisplay>(processor, this, displayViewport.get());
+	displayViewport->setViewedComponent(display.get(), false);
     displayViewport->setScrollBarsShown(true, true);
-	addAndMakeVisible(displayViewport);
+	addAndMakeVisible(displayViewport.get());
 
 	scrollBarThickness = displayViewport->getScrollBarThickness();
 	scrollDistance = 0;
 
 	Font buttonFont("Fira Sans", "SemiBold", 13.0f);
 
-    resetButton = new UtilityButton("Reset", buttonFont);
+    resetButton = std::make_unique<UtilityButton>("Reset", buttonFont);
     resetButton->setRadius(3.0f);
     resetButton->addListener(this);
-    addAndMakeVisible(resetButton);
+    addAndMakeVisible(resetButton.get());
 
-    selectModeButton = new UtilityButton("Single mode", buttonFont);
+    selectModeButton = std::make_unique<UtilityButton>("Single mode", buttonFont);
 	selectModeButton->setTooltip("Allows only one channel per row to be selected at a time");
     selectModeButton->setRadius(4.0f);
     selectModeButton->setClickingTogglesState(true);
     selectModeButton->setToggleState(false, sendNotification);
     selectModeButton->addListener(this);
-    addAndMakeVisible(selectModeButton);
+    addAndMakeVisible(selectModeButton.get());
 
-    saveButton = new UtilityButton("Save", buttonFont);
+    saveButton = std::make_unique<UtilityButton>("Save", buttonFont);
     saveButton->setRadius(3.0f);
     saveButton->addListener(this);
-    addAndMakeVisible(saveButton);
+    addAndMakeVisible(saveButton.get());
 
-    loadButton = new UtilityButton("Load", buttonFont);
+    loadButton = std::make_unique<UtilityButton>("Load", buttonFont);
     loadButton->setRadius(3.0f);
     loadButton->addListener(this);
-    addAndMakeVisible(loadButton);
+    addAndMakeVisible(loadButton.get());
 
-    gainSlider = new Slider("Gain");
+    gainSlider = std::make_unique<Slider>("Gain");
 	gainSlider->setLookAndFeel(&lnf4);
 	gainSlider->setTooltip("Set the global gain value");
 	gainSlider->setSliderStyle(Slider::Rotary);
@@ -80,41 +80,41 @@ VirtualRefCanvas::VirtualRefCanvas(VirtualRef* n) :
 	gainSlider->setColour(Slider::rotarySliderFillColourId, Colour (240, 179, 12).darker(0.5f));
 	gainSlider->setColour(Slider::thumbColourId, Colour (240, 179, 12));
     gainSlider->addListener(this);
-    addAndMakeVisible(gainSlider);
+    addAndMakeVisible(gainSlider.get());
 
 	Font labelFont("Fira Sans", "SemiBold", 16.0f);
 
-	presetNamesLabel = new Label("PresetLabel", "Preset:");
+	presetNamesLabel = std::make_unique<Label>("PresetLabel", "Preset:");
 	presetNamesLabel->setFont(labelFont);
-	addAndMakeVisible(presetNamesLabel);
+	addAndMakeVisible(presetNamesLabel.get());
 
 	presetNames.add("None");
 	presetNames.add("Common average reference");
 	presetNames.add("Avg of other tetrodes");
 	presetNames.add("Avg of next tetrode");
 
-    presetNamesBox = new ComboBox("Presets");
+    presetNamesBox = std::make_unique<ComboBox>("Presets");
     presetNamesBox->addItemList(presetNames, 1);
     presetNamesBox->setSelectedId(1, sendNotification);
     presetNamesBox->setEditableText(false);
     presetNamesBox->addListener(this);
-    addAndMakeVisible(presetNamesBox);
+    addAndMakeVisible(presetNamesBox.get());
 
-	channelCountLabel = new Label("ChanCountLabel", "No. of channels:");
+	channelCountLabel = std::make_unique<Label>("ChanCountLabel", "No. of channels:");
 	channelCountLabel->setFont(labelFont);
-	addAndMakeVisible(channelCountLabel);
+	addAndMakeVisible(channelCountLabel.get());
 
 	for (int i=1; i<=8; i++)
 	{
 		channelCounts.add(String(i*16));
 	}
 
-    channelCountBox = new ComboBox("Channels");
+    channelCountBox = std::make_unique<ComboBox>("Channels");
     channelCountBox->addItemList(channelCounts, 1);
     channelCountBox->setSelectedId(1, sendNotification);
     channelCountBox->setEditableText(false);
     channelCountBox->addListener(this);
-    addAndMakeVisible(channelCountBox);
+    addAndMakeVisible(channelCountBox.get());
 
     update();
 }
@@ -181,21 +181,21 @@ void VirtualRefCanvas::buttonClicked(Button* b)
 {
 	UtilityButton *button = dynamic_cast<UtilityButton*>(b);
 
-	if (button == resetButton)
+	if (button == resetButton.get())
 	{
 		display->reset();
 	}
-	else if (button == selectModeButton)
+	else if (button == selectModeButton.get())
 	{
 		display->setEnableSingleSelectionMode(button->getToggleState());
 		display->grabKeyboardFocus();
 	}
-	else if (button == loadButton)
+	else if (button == loadButton.get())
 	{
 		VirtualRefEditor* editor = dynamic_cast<VirtualRefEditor*>(processor->getEditor());
 		editor->loadParametersDialog();
 	}
-	else if (button == saveButton)
+	else if (button == saveButton.get())
 	{
 		VirtualRefEditor* editor = dynamic_cast<VirtualRefEditor*>(processor->getEditor());
 		editor->saveParametersDialog();
@@ -204,7 +204,7 @@ void VirtualRefCanvas::buttonClicked(Button* b)
 
 void VirtualRefCanvas::comboBoxChanged(ComboBox* cb)
 {
-	if (cb == presetNamesBox || cb == channelCountBox)
+	if (cb == presetNamesBox.get() || cb == channelCountBox.get())
 	{
 		String presetName = presetNames[presetNamesBox->getSelectedId()-1];
 		String s = channelCounts[channelCountBox->getSelectedId()-1];
@@ -215,7 +215,7 @@ void VirtualRefCanvas::comboBoxChanged(ComboBox* cb)
 
 void VirtualRefCanvas::sliderValueChanged(Slider* slider)
 {
-    if (slider == gainSlider)
+    if (slider == gainSlider.get())
 	{
 		processor->setGlobalGain(gainSlider->getValue());
 	}

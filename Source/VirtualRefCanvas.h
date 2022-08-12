@@ -72,24 +72,24 @@ public:
 
 private:
 
-	ScopedPointer<VirtualRefDisplay> display;
+	std::unique_ptr<VirtualRefDisplay> display;
 	VirtualRef* processor;
-	ScopedPointer<Viewport> displayViewport;
+	std::unique_ptr<Viewport> displayViewport;
 
-	ScopedPointer<ComboBox> presetNamesBox;
-	ScopedPointer<Label> presetNamesLabel;
-	ScopedPointer<ComboBox> channelCountBox;
-	ScopedPointer<Label> channelCountLabel;
+	std::unique_ptr<ComboBox> presetNamesBox;
+	std::unique_ptr<Label> presetNamesLabel;
+	std::unique_ptr<ComboBox> channelCountBox;
+	std::unique_ptr<Label> channelCountLabel;
 	StringArray presetNames;
 	StringArray channelCounts;
 
 	LookAndFeel_V4 lnf4;
-	
-	ScopedPointer<UtilityButton> resetButton;
-	ScopedPointer<UtilityButton> selectModeButton;
-	ScopedPointer<UtilityButton> saveButton;
-	ScopedPointer<UtilityButton> loadButton;
-	ScopedPointer<Slider> gainSlider;
+
+	std::unique_ptr<UtilityButton> resetButton;
+	std::unique_ptr<UtilityButton> selectModeButton;
+	std::unique_ptr<UtilityButton> saveButton;
+	std::unique_ptr<UtilityButton> loadButton;
+	std::unique_ptr<Slider> gainSlider;
 
 	OwnedArray<ElectrodeTableButton> electrodeButtons;
 
@@ -173,7 +173,6 @@ private:
 	VirtualRef* processor;
 	VirtualRefCanvas* canvas;
     Viewport* viewport;
-	ScopedPointer<Label> staticLabel;
 
 	OwnedArray<ElectrodeTableButton> electrodeButtons;
 	OwnedArray<CarButton> carButtons;
