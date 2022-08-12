@@ -27,9 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 VirtualRefEditor::VirtualRefEditor(GenericProcessor* parentNode)
-    : VisualizerEditor(parentNode, "Virtual Ref", 180), chanRefCanvas(nullptr)
+    : VisualizerEditor(parentNode, "Virtual Ref", 190), chanRefCanvas(nullptr)
 {	
-
+    canvasSnapshot =  std::make_unique<ImageComponent>("Canvas Snapshot");
+    canvasSnapshot->setBounds(20, 30, 160, 95);
+    addAndMakeVisible(canvasSnapshot.get());
 }
 
 VirtualRefEditor::~VirtualRefEditor()
@@ -103,5 +105,10 @@ void VirtualRefEditor::loadParametersDialog()
 void VirtualRefEditor::selectedStreamHasChanged()
 {
     updateVisualizer();
+}
+
+void VirtualRefEditor::setSnapshot(juce::Image& canvasImage)
+{
+    canvasSnapshot->setImage(canvasImage);
 }
 

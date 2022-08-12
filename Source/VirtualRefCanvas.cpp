@@ -43,40 +43,49 @@ VirtualRefCanvas::VirtualRefCanvas(VirtualRef* n) :
 	scrollBarThickness = displayViewport->getScrollBarThickness();
 	scrollDistance = 0;
 
-    resetButton = new UtilityButton("Reset", Font("Small Text", 13, Font::plain));
+	Font buttonFont("Fira Sans", "SemiBold", 13.0f);
+
+    resetButton = new UtilityButton("Reset", buttonFont);
     resetButton->setRadius(3.0f);
     resetButton->addListener(this);
     addAndMakeVisible(resetButton);
 
-    selectModeButton = new UtilityButton("Single mode", Font("Small Text", 13, Font::plain));
+    selectModeButton = new UtilityButton("Single mode", buttonFont);
+	selectModeButton->setTooltip("Allows only one channel per row to be selected at a time");
     selectModeButton->setRadius(4.0f);
     selectModeButton->setClickingTogglesState(true);
     selectModeButton->setToggleState(false, sendNotification);
     selectModeButton->addListener(this);
     addAndMakeVisible(selectModeButton);
 
-    saveButton = new UtilityButton("Save", Font("Small Text", 13, Font::plain));
+    saveButton = new UtilityButton("Save", buttonFont);
     saveButton->setRadius(3.0f);
     saveButton->addListener(this);
     addAndMakeVisible(saveButton);
 
-    loadButton = new UtilityButton("Load", Font("Small Text", 13, Font::plain));
+    loadButton = new UtilityButton("Load", buttonFont);
     loadButton->setRadius(3.0f);
     loadButton->addListener(this);
     addAndMakeVisible(loadButton);
 
     gainSlider = new Slider("Gain");
+	gainSlider->setLookAndFeel(&lnf4);
+	gainSlider->setTooltip("Set the global gain value");
 	gainSlider->setSliderStyle(Slider::Rotary);
-    gainSlider->setRange(0.0f, 2.0f);
-    gainSlider->setTextBoxStyle(Slider::TextBoxRight, false, 50, 30);
+    gainSlider->setRange(0.0f, 2.0f, 0.01f);
+    gainSlider->setTextBoxStyle(Slider::TextBoxRight, false, 40, 24);
     gainSlider->setValue(1.0f);
-	gainSlider->setColour(Slider::backgroundColourId, Colour(0, 0, 0));
-	gainSlider->setColour(Slider::rotarySliderFillColourId, Colour (240, 179, 12));
+	gainSlider->setColour(Slider::textBoxBackgroundColourId, Colour(211, 211, 211));
+	gainSlider->setColour(Slider::textBoxTextColourId , Colour(0, 0, 0));
+	gainSlider->setColour(Slider::rotarySliderFillColourId, Colour (240, 179, 12).darker(0.5f));
 	gainSlider->setColour(Slider::thumbColourId, Colour (240, 179, 12));
     gainSlider->addListener(this);
     addAndMakeVisible(gainSlider);
 
-	presetNamesLabel = new Label("PresetLabel", "Preset");
+	Font labelFont("Fira Sans", "SemiBold", 16.0f);
+
+	presetNamesLabel = new Label("PresetLabel", "Preset:");
+	presetNamesLabel->setFont(labelFont);
 	addAndMakeVisible(presetNamesLabel);
 
 	presetNames.add("None");
@@ -91,7 +100,8 @@ VirtualRefCanvas::VirtualRefCanvas(VirtualRef* n) :
     presetNamesBox->addListener(this);
     addAndMakeVisible(presetNamesBox);
 
-	channelCountLabel = new Label("ChanCountLabel", "# channels");
+	channelCountLabel = new Label("ChanCountLabel", "No. of channels:");
+	channelCountLabel->setFont(labelFont);
 	addAndMakeVisible(channelCountLabel);
 
 	for (int i=1; i<=8; i++)
@@ -148,12 +158,12 @@ void VirtualRefCanvas::resized()
 	loadButton->setBounds(10, getHeight()-30, 100, 20);
 	saveButton->setBounds(110, getHeight()-30, 100, 20);
 
-	gainSlider->setBounds(240, getHeight()-65, 120, 65);
+	gainSlider->setBounds(220, getHeight()-75, 140, 80);
 
-	channelCountLabel->setBounds(380, getHeight()-30, 100, 20);
-	channelCountBox->setBounds(460, getHeight()-30, 250, 20);
-	presetNamesLabel->setBounds(380, getHeight()-60, 100, 20);
-	presetNamesBox->setBounds(460, getHeight()-60, 250, 20);
+	channelCountLabel->setBounds(380, getHeight()-30, 120, 20);
+	channelCountBox->setBounds(500, getHeight()-30, 200, 20);
+	presetNamesLabel->setBounds(380, getHeight()-60, 120, 20);
+	presetNamesBox->setBounds(500, getHeight()-60, 200, 20);
 }
 
 void VirtualRefCanvas::update()
@@ -250,7 +260,7 @@ void VirtualRefDisplay::drawTable()
 		carButtons.clear();
 
 		/* Create header */
-		Font font(14, Font::plain);
+		Font font("Fira Sans", "Bold", 14.0f);
 
 		Label* header1 = new Label("headerCol1", "Channel");
 		header1->setJustificationType(Justification::horizontallyCentred);
@@ -315,21 +325,39 @@ void VirtualRefDisplay::drawTable()
 
 		setSize(totalWidth, totalHeigth);
 		setBounds(0, 0, totalWidth, totalHeigth);
+		nChannelsBefore = nChannels;
 	}
 	else
 	{
 		/* Only update toggle states of buttons */
+		int numRefs = 0;
 		for (int i=0; i<nChannels; i++)
 		{
 			for (int j=0; j<nChannels; j++)
 			{
 				bool state = processor->getReferenceMatrix()->getValue(i, j) > 0;
 
+				if(state)
+					numRefs++;
+
 				ElectrodeTableButton* button = electrodeButtons[i*nChannels + j];
 				button->setToggleState(state, dontSendNotification);
 			}
+
+			if(numRefs == nChannels)
+				carButtons[i]->setToggleState(true, dontSendNotification);
+			else
+				carButtons[i]->setToggleState(false, dontSendNotification);
+			
+			numRefs = 0;
 		}
 	}
+
+	// Update Editor snapshot image
+	Image refImage = createComponentSnapshot(Rectangle<int>(0, 0, getWidth(), getHeight()));
+	refImage.rescaled(160, 95, Graphics::highResamplingQuality);
+	VirtualRefEditor* editor = dynamic_cast<VirtualRefEditor*>(processor->getEditor());
+	editor->setSnapshot(refImage);
 }
 
 
@@ -341,12 +369,30 @@ void VirtualRefDisplay::update()
 void VirtualRefDisplay::reset()
 {
 	processor->getReferenceMatrix()->clear();
+
+	for(auto button : carButtons)
+		button->setToggleState(false, dontSendNotification);
+
 	update();
 }
 
-void VirtualRefDisplay::setEnableSingleSelectionMode(bool b)
+void VirtualRefDisplay::setEnableSingleSelectionMode(bool mode)
 {
-	singleSelectMode = b;
+	singleSelectMode = mode;
+	
+	if(mode)
+	{
+		for(auto button : carButtons)
+		{
+			button->setToggleState(false, sendNotification);
+			button->setEnabled(false);
+		}
+	}
+	else
+	{
+		for(auto button : carButtons)
+			button->setEnabled(true);
+	}
 }
 
 void VirtualRefDisplay::paint(Graphics& g)
@@ -387,8 +433,6 @@ void VirtualRefDisplay::buttonClicked(Button* b)
 		{
 			chan[i] = value;
 		}
-
-		update();
 	}
 	else
 	{
@@ -409,14 +453,14 @@ void VirtualRefDisplay::buttonClicked(Button* b)
 
 			selectedRow = rowIndex;
 			selectedColumn = colIndex;
-
-			update();
 		}
 		else
 		{
 			processor->getReferenceMatrix()->setValue(rowIndex, colIndex, (float)state);
 		}
 	}
+
+	update();
 }
 
 void VirtualRefDisplay::applyPreset(String name, int numChannels)

@@ -83,6 +83,8 @@ private:
 	StringArray presetNames;
 	StringArray channelCounts;
 
+	LookAndFeel_V4 lnf4;
+	
 	ScopedPointer<UtilityButton> resetButton;
 	ScopedPointer<UtilityButton> selectModeButton;
 	ScopedPointer<UtilityButton> saveButton;

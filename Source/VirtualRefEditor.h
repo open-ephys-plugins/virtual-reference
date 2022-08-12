@@ -58,9 +58,13 @@ public:
     String writePrbFile(File filename);
     String loadPrbFile(File filename);
 
+    void setSnapshot(juce::Image& canvasImage);
+
 private:
 
 	VirtualRefCanvas* chanRefCanvas;
+
+    std::unique_ptr<ImageComponent> canvasSnapshot;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VirtualRefEditor);
 
