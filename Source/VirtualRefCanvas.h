@@ -40,35 +40,41 @@ class VirtualRefCanvas : public Visualizer,
 {
 public:
 
-    VirtualRefCanvas(VirtualRef* n);
-    ~VirtualRefCanvas();
+    /** Constructor */
+	VirtualRefCanvas(VirtualRef* n);
+    
+	/** Destructor */
+	~VirtualRefCanvas();
 
-	void paint(Graphics& g);
+	/** Fills background */
+	void paint(Graphics& g) override;
 
-    void refresh();
+    /** Renders the Visualizer on each animation callback cycle */
+	void refresh() override;
 
-	void beginAnimation();
-    void endAnimation();
+	void beginAnimation() override;
+    void endAnimation() override;
 
-    void refreshState();
-	void resized();
+    /** Called when the Visualizer's tab becomes visible after being hidden */
+	void refreshState() override;
 
-    void setParameter(int, float) {}
-    void setParameter(int, int, int, float) {}
+	/** Sets bounds of sub-components*/
+	void resized() override;
 
+	/** Called when the Visualizer is first created, and optionally when
+		the parameters of the underlying processor are changed */
 	void update();
 
-    void buttonClicked(Button* button);
-
-    void startRecording() { }
-    void stopRecording() { }
+    /** Respond to button clicks*/
+	void buttonClicked(Button* button) override;
 
 	bool updateNeeded = false;
 
-	void mouseDown(const MouseEvent& event);
+	/** Respond to combo box changes*/
+	void comboBoxChanged(ComboBox* cb) override;
 
-	void comboBoxChanged(ComboBox* cb);
-	void sliderValueChanged(Slider* slider);
+	/** Respond to slider changes*/
+	void sliderValueChanged(Slider* slider) override;
 
 private:
 
@@ -142,25 +148,32 @@ class VirtualRefDisplay : public Component, public Button::Listener, public KeyL
 {
 public:
 
-    VirtualRefDisplay(VirtualRef*, VirtualRefCanvas*, Viewport*, bool selectMode = false);
-    ~VirtualRefDisplay();
+    /** Constructor */
+	VirtualRefDisplay(VirtualRef*, VirtualRefCanvas*, Viewport*, bool selectMode = false);
+    
+	/** Destructor */
+	~VirtualRefDisplay();
 
     void paint(Graphics& g);
 
-    void resized();
+	/** Updates the reference matrix view*/
 	void update();
 
-    void mouseDown(const MouseEvent& event);
-
-	void buttonEvent(Button* button);
+	/** Respond to combo box changes*/
 	void buttonClicked(Button* button);
 
 	bool keyPressed(const KeyPress &key, Component *originatingComponent);
 
+	/** Draws the Electrode Button table from the reference matrix */
 	void drawTable();
+
+	/** Reset's the table channel states */
 	void reset();
+
+	/** Enable single channel selection mode */
 	void setEnableSingleSelectionMode(bool b);
 
+	/** Apply a preset from the list */
 	void applyPreset(String name, int numChannels);
 
 private:

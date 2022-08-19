@@ -31,6 +31,28 @@
 
 #include "VirtualRefCanvas.h"
 
+/** 
+  * Draws the preview image and adds a border to it
+*/
+class PreviewImageComponent : public Component
+{
+public:
+    /** Constructor */
+    PreviewImageComponent(const String& name);
+
+    /** Destructor */
+    ~PreviewImageComponent();
+
+    void paint(Graphics& g) override;
+
+    void resized() override;
+
+    /** Sets the ImageComponent's image */
+    void setImage(juce::Image& img);
+
+private:
+    std::unique_ptr<ImageComponent> canvasImageComponent;
+};
 
 /**
 
@@ -39,32 +61,37 @@
   @see VirtualRef
 
 */
-
 class VirtualRefEditor : public VisualizerEditor,
                          public DragAndDropContainer
 {
 public:
 
+    /** Constructor*/
     VirtualRefEditor(GenericProcessor* parentNode);
+
+    /** Destructor */
     virtual ~VirtualRefEditor();
 
-	Visualizer* createNewCanvas();
+	/** Creates the Virtual Reference matrix settings interface*/
+    Visualizer* createNewCanvas();
 
+    /** Save reference matrix in a custom location*/
     void saveParametersDialog();
+
+    /** Load reference matrix from a custom location*/
     void loadParametersDialog();
 
+    /** Upadte visualizer when selected stream changes*/
     void selectedStreamHasChanged() override;
 
-    String writePrbFile(File filename);
-    String loadPrbFile(File filename);
-
+    /** Sets the canvas preview image for the editor*/ 
     void setSnapshot(juce::Image& canvasImage);
 
 private:
 
 	VirtualRefCanvas* chanRefCanvas;
 
-    std::unique_ptr<ImageComponent> canvasSnapshot;
+    std::unique_ptr<PreviewImageComponent> canvasSnapshot;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VirtualRefEditor);
 

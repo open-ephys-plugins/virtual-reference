@@ -172,10 +172,6 @@ void VirtualRefCanvas::update()
 	gainSlider->setValue(processor->getGlobalGain());
 }
 
-void VirtualRefCanvas::mouseDown(const MouseEvent& event)
-{
-
-}
 
 void VirtualRefCanvas::buttonClicked(Button* b)
 {
@@ -354,8 +350,24 @@ void VirtualRefDisplay::drawTable()
 	}
 
 	// Update Editor snapshot image
-	Image refImage = createComponentSnapshot(Rectangle<int>(0, 0, getWidth(), getHeight()));
-	refImage.rescaled(160, 95, Graphics::highResamplingQuality);
+	
+	Image refImage(Image::PixelFormat::RGB, nChannels, nChannels, false);
+	refImage.clear(refImage.getBounds(), Colours::darkgrey);
+
+	for (int i=0; i<nChannels; i++)
+	{
+		for (int j=0; j<nChannels; j++)
+		{
+			bool state = processor->getReferenceMatrix()->getValue(i, j) > 0;
+
+			if(state)
+			{
+				refImage.setPixelAt(j, i, Colours::orange);
+			}
+		}
+	}
+
+	refImage.rescaled(96, 96, Graphics::ResamplingQuality::highResamplingQuality);
 	VirtualRefEditor* editor = dynamic_cast<VirtualRefEditor*>(processor->getEditor());
 	editor->setSnapshot(refImage);
 }
@@ -398,19 +410,6 @@ void VirtualRefDisplay::setEnableSingleSelectionMode(bool mode)
 void VirtualRefDisplay::paint(Graphics& g)
 {
 	g.fillAll(Colours::grey);
-}
-
-void VirtualRefDisplay::resized()
-{
-}
-
-void VirtualRefDisplay::mouseDown(const MouseEvent& event)
-{
-
-}
-
-void VirtualRefDisplay::buttonEvent(Button* button)
-{
 }
 
 void VirtualRefDisplay::buttonClicked(Button* b)

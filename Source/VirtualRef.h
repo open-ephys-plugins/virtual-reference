@@ -48,21 +48,34 @@ class VirtualRef : public GenericProcessor
 {
 public:
 
-    VirtualRef();
-    ~VirtualRef();
+  /** Constructor */
+  VirtualRef();
 
-    void process(AudioBuffer<float>& buffer);
+  /** Destructor */
+  ~VirtualRef();
 
-    AudioProcessorEditor* createEditor();
+  /** Applys average reference gain from all the selected channels for each input channel*/
+  void process(AudioBuffer<float>& buffer);
 
-    void updateSettings();
+  /** Create custom editor*/
+  AudioProcessorEditor* createEditor();
 
-	ReferenceMatrix* getReferenceMatrix();
+  /** Called whenever the signal chain is altered. */
+  void updateSettings();
 
+	/** Gets the reference matrix for current stream */
+  ReferenceMatrix* getReferenceMatrix();
+
+  /** Sets the global gain value */
 	void setGlobalGain(float value);
+
+  /** Gets the global gain value */
 	float getGlobalGain();
 
-	void saveCustomParametersToXml(XmlElement* parentElement);
+	/** Saves all custom parameters */
+  void saveCustomParametersToXml(XmlElement* parentElement);
+
+  /** Loads all custom parameters */
 	void loadCustomParametersFromXml(XmlElement* customParamsXml);
 
 private:
@@ -96,25 +109,45 @@ class ReferenceMatrix
 {
 public:
 
-    ReferenceMatrix(int nChan);
-    ~ReferenceMatrix();
+    
+  /** Constructor */
+  ReferenceMatrix(int nChan);
 
-	void setNumberOfChannels(int n);
+  /** Destructor */
+  ~ReferenceMatrix();
+
+	/** Set the number of channels for the matrix*/
+  void setNumberOfChannels(int n);
+
+  /** Get the number of channels for the matrix*/
 	int getNumberOfChannels();
 
-	void update();
+	/** Called when the input channels have changed*/
+  void update();
 
-	void setValue(int rowIndex, int colIndex, float value);
+	/** Sets the value for the specified row and column */
+  void setValue(int rowIndex, int colIndex, float value);
+
+  /** Gets the value for the specified row and column */
 	float getValue(int rowIndex, int colIndex);
 
-	float* getChannel(int index);
+	/** Gets the channel value for the specified index */
+  float* getChannel(int index);
+
+  /** Checks if all the reference channels are active for the given input channel index */
 	bool allChannelReferencesActive(int index);
 
-	void setAll(float value);
-	void setAll(float value, int maxChan);
-	void clear();
+	/** Sets the value for all reference channels */
+  void setAll(float value);
 
-	void print();
+  /** Sets the value for all reference channels up to the max channel number*/
+	void setAll(float value, int maxChan);
+	
+  /** Clears the reference channel matrix */
+  void clear();
+
+	/** Prints the matrix values*/
+  void print();
 
 private:
 

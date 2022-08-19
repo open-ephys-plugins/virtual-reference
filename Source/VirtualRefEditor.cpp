@@ -26,11 +26,43 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "VirtualRef.h"
 
 
+PreviewImageComponent::PreviewImageComponent(const String& name)
+{
+    canvasImageComponent =  std::make_unique<ImageComponent>(name);
+    Image blankImage(Image::PixelFormat::RGB, 95, 95, false);
+    blankImage.clear(blankImage.getBounds(), Colours::darkgrey);
+    canvasImageComponent->setImage(blankImage);
+    addAndMakeVisible(canvasImageComponent.get());
+}
+
+PreviewImageComponent::~PreviewImageComponent()
+{
+}
+
+void PreviewImageComponent::paint(Graphics& g)
+{
+    g.setColour(Colours::black);
+    g.drawRect(0, 0, 100, 100, 1);
+}
+
+void PreviewImageComponent::resized()
+{
+    canvasImageComponent->setBounds(2, 2, 96, 96);
+}
+
+void PreviewImageComponent::setImage(juce::Image& img)
+{
+    canvasImageComponent->setImage(img);
+}
+
+
+/******************************************************************************/
+
 VirtualRefEditor::VirtualRefEditor(GenericProcessor* parentNode)
     : VisualizerEditor(parentNode, "Virtual Ref", 190), chanRefCanvas(nullptr)
 {	
-    canvasSnapshot =  std::make_unique<ImageComponent>("Canvas Snapshot");
-    canvasSnapshot->setBounds(20, 30, 160, 95);
+    canvasSnapshot =  std::make_unique<PreviewImageComponent>("Canvas Snapshot");
+    canvasSnapshot->setBounds(50, 24, 100, 100);
     addAndMakeVisible(canvasSnapshot.get());
 }
 
