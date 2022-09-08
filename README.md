@@ -1,44 +1,97 @@
-# VirtualRef plugin
+# Virtual Reference
 
-A flexible virtual reference plugin for the open-ephys 
-[plugin-GUI](https://github.com/open-ephys/plugin-GUI/).
+A flexible virtual reference plugin for the open-ephys [plugin-GUI](https://github.com/open-ephys/plugin-GUI/).
 
-Features:
+## Installation
 
-- Control over full reference matrix
-- Global gain for all references
-- Loading/saving of reference matrices
+This plugin can be added via the Open Ephys GUI Plugin Installer. To access the Plugin Installer, press **ctrl-P** or **⌘P** from inside the GUI. Once the installer is loaded, browse to the "Virtual Reference" plugin and click "Install."
 
-# Installation
+## Usage
 
-First build [plugin-gui](https://github.com/open-ephys/plugin-gui) (development branch with cmake) following
-[Building plugin-GUI](https://open-ephys.atlassian.net/wiki/spaces/OEW/pages/1301643269/Creating+Build+files) and then
-[Installing plugin-GUI](https://open-ephys.atlassian.net/wiki/spaces/OEW/pages/491544/Installation)
+>**NOTE:** Due to limitations of the settings interface, it’s not recommended to use this plugin with more than 128 input channels.
+### Plugin Editor
 
-Then, following instructions for building third-party Plugins [Building Plugins](https://open-ephys.atlassian.net/wiki/spaces/OEW/pages/1259110401/Plugin+CMake+Builds)
+* Shows a preview of the current state of refernence matrix for the selected stream. 
 
-In ```VirtualReferencePlugin\VirtualRef\Build``` folder
+* All of the configuration occurs inside the plugin’s visualizer. To access it, click on one of the buttons in the upper right of the plugin editor to open the settings interface in a tab or window.
+### Visualizer Window
 
+The main settings interface consists of a matrix with one row for each input channel and one column for each potential reference channel. Selecting all the channels in a row is equivalent to using a common average reference for that input channel. Selecting only one channel in a row is the equivalent of using a single digital reference. When no channels are selected in a row, the data for the incoming channel will be unchanged.
+
+The bottom of the settings interface presents several additional options:
+
+* **RESET**: Removes all reference settings, restoring the plugin to its default state.
+* **SINGLE MODE**: Allows only one channel per row to be selected at a time.
+* **SAVE**: Saves the reference settings to a config file.
+* **LOAD**: Loads the reference settings from a config file.
+* **Gain slider**: Changes the multiplier used on the reference channels before subtracting from the input channel (default = 1).
+* **Preset**: Select from several useful pre-defined configurations.
+* **No. of channels**: Sets the maximum number of channels used for the preset configurations.
+
+## Building from source
+
+First, follow the instructions on [this page](https://open-ephys.github.io/gui-docs/Developer-Guide/Compiling-the-GUI.html) to build the Open Ephys GUI.
+
+**Important:** This plugin is intended for use with the latest version of the GUI (0.6.0 and higher). The GUI should be compiled from the [`main`](https://github.com/open-ephys/plugin-gui/tree/main) branch, rather than the former `master` branch.
+
+Then, clone this repository into a directory at the same level as the `plugin-GUI`, e.g.:
+ 
 ```
-export GUI_BASE_DIR=path/to/GUI
+Code
+├── plugin-GUI
+│   ├── Build
+│   ├── Source
+│   └── ...
+├── OEPlugins
+│   └── virtual-reference
+│       ├── Build
+│       ├── Source
+│       └── ...
 ```
 
-```path/to/GUI``` should be changed to the absolute path where the plugin-gui folder is located
+### Windows
 
-Then
+**Requirements:** [Visual Studio](https://visualstudio.microsoft.com/) and [CMake](https://cmake.org/install/)
+
+From the `Build` directory, enter:
+
+```bash
+cmake -G "Visual Studio 17 2022" -A x64 ..
 ```
-cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug ..
-make
+
+Next, launch Visual Studio and open the `OE_PLUGIN_virtual-reference.sln` file that was just created. Select the appropriate configuration (Debug/Release) and build the solution.
+
+Selecting the `INSTALL` project and manually building it will copy the `.dll` and any other required files into the GUI's `plugins` directory. The next time you launch the GUI from Visual Studio, the Virtual Reference plugin should be available.
+
+
+### Linux
+
+**Requirements:** [CMake](https://cmake.org/install/)
+
+From the `Build` directory, enter:
+
+```bash
+cmake -G "Unix Makefiles" ..
+cd Debug
+make -j
 make install
 ```
 
-# Important
+This will build the plugin and copy the `.so` file into the GUI's `plugins` directory. The next time you launch the compiled version of the GUI, the Virtual Reference plugin should be available.
 
-The open-ephys plugin GUI is currently updating it's internal structure. 
-Therefore use the plugin's master branch for the master branch of the 
-GUI and the plugin's development branch for the development branch of the GUI.
 
-# TODO
+### macOS
 
-- saving/loading parameters in json format
+**Requirements:** [Xcode](https://developer.apple.com/xcode/) and [CMake](https://cmake.org/install/)
+
+From the `Build` directory, enter:
+
+```bash
+cmake -G "Xcode" ..
+```
+
+Next, launch Xcode and open the `virtual-reference.xcodeproj` file that now lives in the “Build” directory.
+
+Running the `ALL_BUILD` scheme will compile the plugin; running the `INSTALL` scheme will install the `.bundle` file to `/Users/<username>/Library/Application Support/open-ephys/plugins-api`. The Virtual Reference plugin should be available the next time you launch the GUI from Xcode.
+
 
