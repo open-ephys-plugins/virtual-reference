@@ -186,6 +186,7 @@ private:
 	VirtualRef* processor;
 	VirtualRefCanvas* canvas;
     Viewport* viewport;
+	ReferenceMatrix* refMatrix;
 
 	OwnedArray<ElectrodeTableButton> electrodeButtons;
 	OwnedArray<CarButton> carButtons;

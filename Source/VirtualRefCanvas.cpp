@@ -222,10 +222,10 @@ void VirtualRefCanvas::sliderValueChanged(Slider* slider)
 // ----------------------------------------------------------------
 
 VirtualRefDisplay::VirtualRefDisplay(VirtualRef* n, VirtualRefCanvas* c, Viewport* v, bool selectMode) :
-    processor(n), canvas(c), viewport(v), nChannelsBefore(-1), singleSelectMode(selectMode)
+    processor(n), canvas(c), viewport(v), nChannelsBefore(-1), singleSelectMode(selectMode), refMatrix(nullptr)
 {
 	addKeyListener(this);
-	drawTable();
+	update();
 }
 
 VirtualRefDisplay::~VirtualRefDisplay()
@@ -234,7 +234,7 @@ VirtualRefDisplay::~VirtualRefDisplay()
 
 void VirtualRefDisplay::drawTable()
 {
-	int nChannels = processor->getReferenceMatrix()->getNumberOfChannels();
+	int nChannels = refMatrix->getNumberOfChannels();
 
 	if (nChannels != nChannelsBefore)
 	{
@@ -306,7 +306,7 @@ void VirtualRefDisplay::drawTable()
 
 			for (int j=0; j<nChannels; j++)
 			{
-				bool state = processor->getReferenceMatrix()->getValue(i, j) > 0;
+				bool state = refMatrix->getValue(i, j) > 0;
 
 				ElectrodeTableButton* button = new ElectrodeTableButton(j+1, i, j);
 				button->setToggleState(state, dontSendNotification);
@@ -331,7 +331,7 @@ void VirtualRefDisplay::drawTable()
 		{
 			for (int j=0; j<nChannels; j++)
 			{
-				bool state = processor->getReferenceMatrix()->getValue(i, j) > 0;
+				bool state = refMatrix->getValue(i, j) > 0;
 
 				if(state)
 					numRefs++;
@@ -358,7 +358,7 @@ void VirtualRefDisplay::drawTable()
 	{
 		for (int j=0; j<nChannels; j++)
 		{
-			bool state = processor->getReferenceMatrix()->getValue(i, j) > 0;
+			bool state = refMatrix->getValue(i, j) > 0;
 
 			if(state)
 			{
@@ -375,17 +375,38 @@ void VirtualRefDisplay::drawTable()
 
 void VirtualRefDisplay::update()
 {
-	drawTable();
+	// If a reference matrix is available, draw table
+	if(processor->getReferenceMatrix())
+	{
+		refMatrix = processor->getReferenceMatrix();
+		drawTable();
+	}
+	else // clear everything
+	{
+		refMatrix = nullptr;
+		headerLabels.clear();
+		rowLabels.clear();
+		electrodeButtons.clear();
+		carButtons.clear();
+
+		Image blankImage(Image::PixelFormat::RGB, 95, 95, false);
+    	blankImage.clear(blankImage.getBounds(), Colours::darkgrey);
+		VirtualRefEditor* editor = dynamic_cast<VirtualRefEditor*>(processor->getEditor());
+		editor->setSnapshot(blankImage);
+	}
 }
 
 void VirtualRefDisplay::reset()
 {
-	processor->getReferenceMatrix()->clear();
+	if(refMatrix)
+	{
+		refMatrix->clear();
 
-	for(auto button : carButtons)
-		button->setToggleState(false, dontSendNotification);
+		for(auto button : carButtons)
+			button->setToggleState(false, dontSendNotification);
 
-	update();
+		update();
+	}
 }
 
 void VirtualRefDisplay::setEnableSingleSelectionMode(bool mode)
@@ -423,12 +444,12 @@ void VirtualRefDisplay::buttonClicked(Button* b)
 		CarButton* button = dynamic_cast<CarButton*>(b);
 		int channelIndex = button->getChannelNum();
 
-		float* chan = processor->getReferenceMatrix()->getChannel(channelIndex);
+		float* chan = refMatrix->getChannel(channelIndex);
 
 		float value;
 		button->getToggleState() ? value = 1 : value = 0;
 			
-		for (int i=0; i<processor->getReferenceMatrix()->getNumberOfChannels(); i++)
+		for (int i=0; i<refMatrix->getNumberOfChannels(); i++)
 		{
 			chan[i] = value;
 		}
@@ -443,19 +464,19 @@ void VirtualRefDisplay::buttonClicked(Button* b)
 
 		if (singleSelectMode)
 		{
-			int nChannels = processor->getReferenceMatrix()->getNumberOfChannels();
+			int nChannels = refMatrix->getNumberOfChannels();
 			for (int i=0; i<nChannels; i++)
 			{
-				processor->getReferenceMatrix()->setValue(rowIndex, i, 0);
+				refMatrix->setValue(rowIndex, i, 0);
 			}
-			processor->getReferenceMatrix()->setValue(rowIndex, colIndex, 1.);
+			refMatrix->setValue(rowIndex, colIndex, 1.);
 
 			selectedRow = rowIndex;
 			selectedColumn = colIndex;
 		}
 		else
 		{
-			processor->getReferenceMatrix()->setValue(rowIndex, colIndex, (float)state);
+			refMatrix->setValue(rowIndex, colIndex, (float)state);
 		}
 	}
 
@@ -464,13 +485,15 @@ void VirtualRefDisplay::buttonClicked(Button* b)
 
 void VirtualRefDisplay::applyPreset(String name, int numChannels)
 {
-	ReferenceMatrix* refMat = processor->getReferenceMatrix();
-	int nChannels = refMat->getNumberOfChannels();
+	if(!refMatrix)
+		return;
+	
+	int nChannels = refMatrix->getNumberOfChannels();
 
 	if (name.equalsIgnoreCase("Other tetrode electrodes"))
 	{
 		nChannels = MIN(nChannels, numChannels);
-		refMat->clear();
+		refMatrix->clear();
 
 		int nTetrodes = nChannels / 4;
 		for (int i=0; i<nTetrodes; i++)
@@ -482,7 +505,7 @@ void VirtualRefDisplay::applyPreset(String name, int numChannels)
 				{
 					if (j != k)
 					{
-						refMat->setValue(channelIndex, i*4 + k, 1);
+						refMatrix->setValue(channelIndex, i*4 + k, 1);
 					}
 				}
 			}
@@ -493,7 +516,7 @@ void VirtualRefDisplay::applyPreset(String name, int numChannels)
 	else if (name.equalsIgnoreCase("All tetrode electrodes"))
 	{
 		nChannels = MIN(nChannels, numChannels);
-		refMat->clear();
+		refMatrix->clear();
 
 		int nTetrodes = nChannels / 4;
 		for (int i=0; i<nTetrodes; i++)
@@ -503,7 +526,7 @@ void VirtualRefDisplay::applyPreset(String name, int numChannels)
 				int channelIndex = i*4 + j;
 				for (int k=0; k<4; k++)
 				{
-					refMat->setValue(channelIndex, i*4 + k, 1);
+					refMatrix->setValue(channelIndex, i*4 + k, 1);
 				}
 			}
 		}
@@ -513,12 +536,12 @@ void VirtualRefDisplay::applyPreset(String name, int numChannels)
 	else if (name.equalsIgnoreCase("Common average reference"))
 	{
 		nChannels = MIN(nChannels, numChannels);
-		refMat->clear();
+		refMatrix->clear();
 		for (int i=0; i<nChannels; i++)
 		{
 			for (int j=0; j<nChannels; j++)
 			{
-				refMat->setValue(i, j, 1);
+				refMatrix->setValue(i, j, 1);
 			}
 		}
 
@@ -527,11 +550,11 @@ void VirtualRefDisplay::applyPreset(String name, int numChannels)
 	else if (name.equalsIgnoreCase("Avg of other tetrodes"))
 	{
 		nChannels = MIN(nChannels, numChannels);
-		refMat->clear();
+		refMatrix->clear();
 
 		/* Activate all channels and deselect channels at the same tetrode */
 		int nTetrodes = nChannels / 4;
-		refMat->setAll(1, nChannels);
+		refMatrix->setAll(1, nChannels);
 		for (int i=0; i<nTetrodes; i++)
 		{
 			for (int j=0; j<4; j++)
@@ -539,7 +562,7 @@ void VirtualRefDisplay::applyPreset(String name, int numChannels)
 				int channelIndex = i*4 + j;
 				for (int k=0; k<4; k++)
 				{
-					refMat->setValue(channelIndex, i*4 + k, 0);
+					refMatrix->setValue(channelIndex, i*4 + k, 0);
 				}
 			}
 		}
@@ -549,7 +572,7 @@ void VirtualRefDisplay::applyPreset(String name, int numChannels)
 	else if (name.equalsIgnoreCase("Avg of next tetrode"))
 	{
 		nChannels = MIN(nChannels, numChannels);
-		refMat->clear();
+		refMatrix->clear();
 
 		int nTetrodes = nChannels / 4;
 
@@ -561,11 +584,11 @@ void VirtualRefDisplay::applyPreset(String name, int numChannels)
 				{
 					if (i < nTetrodes - 1)
 					{
-						refMat->setValue(i*4+j, (i+1)*4+k, 1);
+						refMatrix->setValue(i*4+j, (i+1)*4+k, 1);
 					}
 					else
 					{
-						refMat->setValue(i*4+j, (i-1)*4+k, 1);
+						refMatrix->setValue(i*4+j, (i-1)*4+k, 1);
 					}
 				}
 			}
@@ -585,7 +608,7 @@ bool VirtualRefDisplay::keyPressed(const KeyPress &key, Component *originatingCo
 	{
 		if (selectedRow > -1 && selectedColumn > -1)
 		{
-			int nChannels = processor->getReferenceMatrix()->getNumberOfChannels();
+			int nChannels = refMatrix->getNumberOfChannels();
 			if (key.getTextDescription().compare("cursor left") == 0 && selectedColumn > 0)
 			{
 //				std::cout << ":::Move left:::" << std::endl;
