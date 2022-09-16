@@ -2,7 +2,7 @@
 
 ![virtual-ref-editor](https://open-ephys.github.io/gui-docs/_images/virtualreference-01.png)
 
-Makes it possible to flexibly reference any combination of channels to any other.
+Makes it possible to reference any combination of channels to any other.
 
 ## Installation
 
