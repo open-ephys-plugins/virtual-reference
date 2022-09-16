@@ -2,7 +2,7 @@
 
 ![virtual-ref-editor](https://open-ephys.github.io/gui-docs/_images/virtualreference-01.png)
 
-A flexible virtual reference plugin for the open-ephys [plugin-GUI](https://github.com/open-ephys/plugin-GUI/).
+Makes it possible to flexibly reference any combination of channels to any other.
 
 ## Installation
 
