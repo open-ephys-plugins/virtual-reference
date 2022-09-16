@@ -1,5 +1,7 @@
 # Virtual Reference
 
+![virtual-ref-editor](https://open-ephys.github.io/gui-docs/_images/virtualreference-01.png)
+
 A flexible virtual reference plugin for the open-ephys [plugin-GUI](https://github.com/open-ephys/plugin-GUI/).
 
 ## Installation
@@ -8,22 +10,24 @@ This plugin can be added via the Open Ephys GUI Plugin Installer. To access the 
 
 ## Usage
 
->**NOTE:** Due to limitations of the settings interface, it’s not recommended to use this plugin with more than 128 input channels.
 ### Plugin Editor
 
-* Shows a preview of the current state of refernence matrix for the selected stream. 
+* Shows a preview of the current state of reference matrix for the selected stream. 
 
 * All of the configuration occurs inside the plugin’s visualizer. To access it, click on one of the buttons in the upper right of the plugin editor to open the settings interface in a tab or window.
+
 ### Visualizer Window
+
+![virtual-ref-visualizer](https://open-ephys.github.io/gui-docs/_images/virtualreference-02.png)
 
 The main settings interface consists of a matrix with one row for each input channel and one column for each potential reference channel. Selecting all the channels in a row is equivalent to using a common average reference for that input channel. Selecting only one channel in a row is the equivalent of using a single digital reference. When no channels are selected in a row, the data for the incoming channel will be unchanged.
 
 The bottom of the settings interface presents several additional options:
 
-* **RESET**: Removes all reference settings, restoring the plugin to its default state.
-* **SINGLE MODE**: Allows only one channel per row to be selected at a time.
-* **SAVE**: Saves the reference settings to a config file.
-* **LOAD**: Loads the reference settings from a config file.
+* **Reset**: Removes all reference settings, restoring the plugin to its default state.
+* **Single mode**: Allows only one channel per row to be selected at a time.
+* **Save**: Saves the reference settings to a config file.
+* **Load**: Loads the reference settings from a config file.
 * **Gain slider**: Changes the multiplier used on the reference channels before subtracting from the input channel (default = 1).
 * **Preset**: Select from several useful pre-defined configurations.
 * **No. of channels**: Sets the maximum number of channels used for the preset configurations.
