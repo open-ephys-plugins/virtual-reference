@@ -43,7 +43,7 @@ extern "C" EXPORT void getLibInfo(Plugin::LibraryInfo* info)
 	info->apiVersion = PLUGIN_API_VER;
 
 	//Name of the Library, used only for information
-	info->name = "Virtual Reference";
+	info->name = "Virtual Ref";
 
 	//Version of the library, used only for information
 	info->libVersion = "0.2.0";
@@ -60,7 +60,7 @@ extern "C" EXPORT int getPluginInfo(int index, Plugin::PluginInfo* info)
 		info->type = Plugin::Type::PROCESSOR;
 
 		//Processor name
-		info->processor.name = "Virtual Reference"; //Processor name shown in the GUI
+		info->processor.name = "Virtual Ref"; //Processor name shown in the GUI
 
 		//Type of processor. Can be FilterProcessor, SourceProcessor, SinkProcessor or UtilityProcessor. Specifies where on the processor list will appear
 		info->processor.type = Plugin::Processor::FILTER;

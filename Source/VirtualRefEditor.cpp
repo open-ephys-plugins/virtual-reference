@@ -59,10 +59,10 @@ void PreviewImageComponent::setImage(juce::Image& img)
 /******************************************************************************/
 
 VirtualRefEditor::VirtualRefEditor(GenericProcessor* parentNode)
-    : VisualizerEditor(parentNode, "Virtual Ref", 190), chanRefCanvas(nullptr)
+    : VisualizerEditor(parentNode, "Virtual Ref"), chanRefCanvas(nullptr)
 {	
     canvasSnapshot =  std::make_unique<PreviewImageComponent>("Canvas Snapshot");
-    canvasSnapshot->setBounds(50, 24, 100, 100);
+    canvasSnapshot->setBounds(45, 26, 100, 100);
     addAndMakeVisible(canvasSnapshot.get());
 }
 

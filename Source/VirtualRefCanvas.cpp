@@ -45,12 +45,12 @@ VirtualRefCanvas::VirtualRefCanvas(VirtualRef* n) :
 
 	Font buttonFont("Fira Sans", "SemiBold", 13.0f);
 
-    resetButton = std::make_unique<UtilityButton>("Reset", buttonFont);
+    resetButton = std::make_unique<UtilityButton>("Reset");
     resetButton->setRadius(3.0f);
     resetButton->addListener(this);
     addAndMakeVisible(resetButton.get());
 
-    selectModeButton = std::make_unique<UtilityButton>("Single mode", buttonFont);
+    selectModeButton = std::make_unique<UtilityButton>("Single mode");
 	selectModeButton->setTooltip("Allows only one channel per row to be selected at a time");
     selectModeButton->setRadius(4.0f);
     selectModeButton->setClickingTogglesState(true);
@@ -58,12 +58,12 @@ VirtualRefCanvas::VirtualRefCanvas(VirtualRef* n) :
     selectModeButton->addListener(this);
     addAndMakeVisible(selectModeButton.get());
 
-    saveButton = std::make_unique<UtilityButton>("Save", buttonFont);
+    saveButton = std::make_unique<UtilityButton>("Save");
     saveButton->setRadius(3.0f);
     saveButton->addListener(this);
     addAndMakeVisible(saveButton.get());
 
-    loadButton = std::make_unique<UtilityButton>("Load", buttonFont);
+    loadButton = std::make_unique<UtilityButton>("Load");
     loadButton->setRadius(3.0f);
     loadButton->addListener(this);
     addAndMakeVisible(loadButton.get());

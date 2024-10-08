@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 VirtualRef::VirtualRef()
-    : GenericProcessor("Virtual Reference"),
+    : GenericProcessor("Virtual Ref"),
 	  channelBuffer(1, BUFFER_SIZE),
 	  avgBuffer(1, BUFFER_SIZE),
 	  globalGain(1.0f)
