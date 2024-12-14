@@ -25,9 +25,8 @@
 #define __VIRTUALREFEDITOR_H__
 
 #include <EditorHeaders.h>
-#include <VisualizerWindowHeaders.h>
 #include <VisualizerEditorHeaders.h>
-
+#include <VisualizerWindowHeaders.h>
 
 #include "VirtualRefCanvas.h"
 
@@ -38,17 +37,17 @@ class PreviewImageComponent : public Component
 {
 public:
     /** Constructor */
-    PreviewImageComponent(const String& name);
+    PreviewImageComponent (const String& name);
 
     /** Destructor */
     ~PreviewImageComponent();
 
-    void paint(Graphics& g) override;
+    void paint (Graphics& g) override;
 
     void resized() override;
 
     /** Sets the ImageComponent's image */
-    void setImage(juce::Image& img);
+    void setImage (juce::Image& img);
 
 private:
     std::unique_ptr<ImageComponent> canvasImageComponent;
@@ -65,14 +64,13 @@ class VirtualRefEditor : public VisualizerEditor,
                          public DragAndDropContainer
 {
 public:
-
     /** Constructor*/
-    VirtualRefEditor(GenericProcessor* parentNode);
+    VirtualRefEditor (GenericProcessor* parentNode);
 
     /** Destructor */
     virtual ~VirtualRefEditor();
 
-	/** Creates the Virtual Reference matrix settings interface*/
+    /** Creates the Virtual Reference matrix settings interface*/
     Visualizer* createNewCanvas();
 
     /** Save reference matrix in a custom location*/
@@ -84,17 +82,15 @@ public:
     /** Upadte visualizer when selected stream changes*/
     void selectedStreamHasChanged() override;
 
-    /** Sets the canvas preview image for the editor*/ 
-    void setSnapshot(juce::Image& canvasImage);
+    /** Sets the canvas preview image for the editor*/
+    void setSnapshot (juce::Image& canvasImage);
 
 private:
-
-	VirtualRefCanvas* chanRefCanvas;
+    VirtualRefCanvas* chanRefCanvas;
 
     std::unique_ptr<PreviewImageComponent> canvasSnapshot;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VirtualRefEditor);
-
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VirtualRefEditor);
 };
 
-#endif  // __VIRTUALREFEDITOR_H__
+#endif // __VIRTUALREFEDITOR_H__

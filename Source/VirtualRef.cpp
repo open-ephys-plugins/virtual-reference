@@ -21,21 +21,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-#include <stdio.h>
 #include "VirtualRef.h"
 #include "VirtualRefEditor.h"
+#include <stdio.h>
 
-
-#define MIN(a,b) (((a)<(b))?(a):(b))
-
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 VirtualRef::VirtualRef()
-    : GenericProcessor("Virtual Ref"),
-	  channelBuffer(1, BUFFER_SIZE),
-	  avgBuffer(1, BUFFER_SIZE),
-	  globalGain(1.0f)
+    : GenericProcessor ("Virtual Ref"),
+      channelBuffer (1, BUFFER_SIZE),
+      avgBuffer (1, BUFFER_SIZE),
+      globalGain (1.0f)
 {
-
 }
 
 VirtualRef::~VirtualRef()
@@ -44,319 +41,312 @@ VirtualRef::~VirtualRef()
 
 AudioProcessorEditor* VirtualRef::createEditor()
 {
-    editor = std::make_unique<VirtualRefEditor>(this);
+    editor = std::make_unique<VirtualRefEditor> (this);
     return editor.get();
 }
 
-
-
 void VirtualRef::updateSettings()
 {
-	for(auto stream : getDataStreams())
-	{
-		int numChannels = (stream->getChannelCount() > 128) ? 128 : stream->getChannelCount();
-
-		refMatMap.emplace(stream->getStreamId(), std::make_unique<ReferenceMatrix>(numChannels));
-
-		if (editor != nullptr)
-		{
-			editor->updateVisualizer();
-		}
-	}
-}
-
-
-void VirtualRef::process(AudioBuffer<float>& buffer)
-{
-	// loop through the streams
     for (auto stream : getDataStreams())
     {
+        int numChannels = (stream->getChannelCount() > 128) ? 128 : stream->getChannelCount();
 
-		if ((*stream)["enable_stream"])
+        refMatMap.emplace (stream->getStreamId(), std::make_unique<ReferenceMatrix> (numChannels));
+
+        if (editor != nullptr)
         {
-			float* ref;
-			float refGain;
-			int numRefs;
-			int numChan = refMatMap[stream->getStreamId()]->getNumberOfChannels();
+            editor->updateVisualizer();
+        }
+    }
+}
 
-			channelBuffer = buffer;
+void VirtualRef::process (AudioBuffer<float>& buffer)
+{
+    // loop through the streams
+    for (auto stream : getDataStreams())
+    {
+        if ((*stream)["enable_stream"])
+        {
+            float* ref;
+            float refGain;
+            int numRefs;
+            int numChan = refMatMap[stream->getStreamId()]->getNumberOfChannels();
 
-			for (int i=0; i<numChan; i++)
-			{
-				avgBuffer.clear();
+            channelBuffer = buffer;
 
-				ref = refMatMap[stream->getStreamId()]->getChannel(i);
-				numRefs = 0;
-				for (int j=0; j<numChan; j++)
-				{
-					if (ref[j] > 0)
-					{
-						numRefs++;
-					}
-				}
+            for (int i = 0; i < numChan; i++)
+            {
+                avgBuffer.clear();
 
-				for (int j=0; j<numChan; j++)
-				{
-					if (ref[j] > 0)
-					{
-						refGain = 1.0f / float(numRefs);
-						int globalChanIndex = stream->getContinuousChannels()[j]->getGlobalIndex();
-						
-						avgBuffer.addFrom(0,
-										  0,
-										  channelBuffer,
-										  globalChanIndex,
-										  0,
-										  channelBuffer.getNumSamples(),
-										  refGain);
-					}
-				}
-				
+                ref = refMatMap[stream->getStreamId()]->getChannel (i);
+                numRefs = 0;
+                for (int j = 0; j < numChan; j++)
+                {
+                    if (ref[j] > 0)
+                    {
+                        numRefs++;
+                    }
+                }
 
-				if (numRefs > 0)
-				{
-					int globalChanIndex = stream->getContinuousChannels()[i]->getGlobalIndex();
+                for (int j = 0; j < numChan; j++)
+                {
+                    if (ref[j] > 0)
+                    {
+                        refGain = 1.0f / float (numRefs);
+                        int globalChanIndex = stream->getContinuousChannels()[j]->getGlobalIndex();
 
-					buffer.addFrom(globalChanIndex,			// destChannel
-								   0,						// destStartSample
-								   avgBuffer,				// source
-								   0,						// sourceChannel
-								   0,						// sourceStartSample
-								   buffer.getNumSamples(),	// numSamples
-								   -1.0f * globalGain);		// global gain to apply 
-				}
-			}
-		}
-	}
+                        avgBuffer.addFrom (0,
+                                           0,
+                                           channelBuffer,
+                                           globalChanIndex,
+                                           0,
+                                           channelBuffer.getNumSamples(),
+                                           refGain);
+                    }
+                }
+
+                if (numRefs > 0)
+                {
+                    int globalChanIndex = stream->getContinuousChannels()[i]->getGlobalIndex();
+
+                    buffer.addFrom (globalChanIndex, // destChannel
+                                    0, // destStartSample
+                                    avgBuffer, // source
+                                    0, // sourceChannel
+                                    0, // sourceStartSample
+                                    buffer.getNumSamples(), // numSamples
+                                    -1.0f * globalGain); // global gain to apply
+                }
+            }
+        }
+    }
 }
 
 ReferenceMatrix* VirtualRef::getReferenceMatrix()
 {
-	return refMatMap[getEditor()->getCurrentStream()].get();
+    return refMatMap[getEditor()->getCurrentStream()].get();
 }
 
-void VirtualRef::setGlobalGain(float value)
+void VirtualRef::setGlobalGain (float value)
 {
-	globalGain = value;
+    globalGain = value;
 }
 
 float VirtualRef::getGlobalGain()
 {
-	return globalGain;
+    return globalGain;
 }
 
-void VirtualRef::saveCustomParametersToXml(XmlElement* xml)
+void VirtualRef::saveCustomParametersToXml (XmlElement* xml)
 {
-    xml->setAttribute("Type", "VirtualRef");
-	xml->setAttribute("GlobalGain", getGlobalGain());
+    xml->setAttribute ("Type", "VirtualRef");
+    xml->setAttribute ("GlobalGain", getGlobalGain());
 
-	for(auto stream : getDataStreams())
-	{
-		uint16 streamID = stream->getStreamId();
-		XmlElement* streamXml = xml->createNewChildElement("STREAM");
-		streamXml->setAttribute("ID", streamID);
+    for (auto stream : getDataStreams())
+    {
+        uint16 streamID = stream->getStreamId();
+        XmlElement* streamXml = xml->createNewChildElement ("STREAM");
+        streamXml->setAttribute ("ID", streamID);
 
-		int numChannels = refMatMap[streamID]->getNumberOfChannels();
+        int numChannels = refMatMap[streamID]->getNumberOfChannels();
 
-		for (int i=0; i<numChannels; i++)
-		{
-			float* ref = refMatMap[streamID]->getChannel(i);
- 
-			XmlElement* channelXml = streamXml->createNewChildElement("CHANNEL");
-			channelXml->setAttribute("Index", i+1);
-			for (int j=0; j<numChannels; j++)
-			{
-				if (ref[j] > 0)
-				{
-					XmlElement* refXml = channelXml->createNewChildElement("REFERENCE");
-					refXml->setAttribute("Index", j+1);
-					refXml->setAttribute("Value", ref[j]);
-				}
-			}
-		}
-	}
+        for (int i = 0; i < numChannels; i++)
+        {
+            float* ref = refMatMap[streamID]->getChannel (i);
+
+            XmlElement* channelXml = streamXml->createNewChildElement ("CHANNEL");
+            channelXml->setAttribute ("Index", i + 1);
+            for (int j = 0; j < numChannels; j++)
+            {
+                if (ref[j] > 0)
+                {
+                    XmlElement* refXml = channelXml->createNewChildElement ("REFERENCE");
+                    refXml->setAttribute ("Index", j + 1);
+                    refXml->setAttribute ("Value", ref[j]);
+                }
+            }
+        }
+    }
 }
 
-void VirtualRef::loadCustomParametersFromXml(XmlElement* customParamsXml)
+void VirtualRef::loadCustomParametersFromXml (XmlElement* customParamsXml)
 {
-    float globGain = (float)customParamsXml->getDoubleAttribute("GlobalGain", 1.0f);
-	setGlobalGain(globGain);
+    float globGain = (float) customParamsXml->getDoubleAttribute ("GlobalGain", 1.0f);
+    setGlobalGain (globGain);
 
-	for(auto streamXml : customParamsXml->getChildWithTagNameIterator("STREAM"))
-	{
-		uint16 streamID = streamXml->getIntAttribute("ID");
+    for (auto streamXml : customParamsXml->getChildWithTagNameIterator ("STREAM"))
+    {
+        uint16 streamID = streamXml->getIntAttribute ("ID");
 
-		if(streamID == 0 || refMatMap.find(streamID) == refMatMap.end())
-			continue;
+        if (streamID == 0 || refMatMap.find (streamID) == refMatMap.end())
+            continue;
 
-		refMatMap[streamID]->clear();
-		
-		for(auto channelXml : streamXml->getChildWithTagNameIterator("CHANNEL"))
-		{
-			int channelIndex = channelXml->getIntAttribute("Index");
+        refMatMap[streamID]->clear();
 
-			for(auto refXml : channelXml->getChildWithTagNameIterator("REFERENCE"))
-			{
-				int refIndex = refXml->getIntAttribute("Index");
-				float gain = (float)refXml->getDoubleAttribute("Value");
-				refMatMap[streamID]->setValue(channelIndex - 1, refIndex - 1, gain);
-			}
-		}
-	}
+        for (auto channelXml : streamXml->getChildWithTagNameIterator ("CHANNEL"))
+        {
+            int channelIndex = channelXml->getIntAttribute ("Index");
 
-	getEditor()->updateVisualizer();
+            for (auto refXml : channelXml->getChildWithTagNameIterator ("REFERENCE"))
+            {
+                int refIndex = refXml->getIntAttribute ("Index");
+                float gain = (float) refXml->getDoubleAttribute ("Value");
+                refMatMap[streamID]->setValue (channelIndex - 1, refIndex - 1, gain);
+            }
+        }
+    }
+
+    getEditor()->updateVisualizer();
 }
-
 
 /* -----------------------------------------------------------------
 ReferenceMatrix
 ----------------------------------------------------------------- */
 
-ReferenceMatrix::ReferenceMatrix(int nChan)
+ReferenceMatrix::ReferenceMatrix (int nChan)
 {
-	nChannels = nChan;
-	nChannelsBefore = -1;
-	values = nullptr;
-	update();
+    nChannels = nChan;
+    nChannelsBefore = -1;
+    values = nullptr;
+    update();
 }
 
 ReferenceMatrix::~ReferenceMatrix()
 {
-	if (values != nullptr)
-		delete[] values;
+    if (values != nullptr)
+        delete[] values;
 }
 
-void ReferenceMatrix::setNumberOfChannels(int n)
+void ReferenceMatrix::setNumberOfChannels (int n)
 {
-	nChannels = n;
-	update();
+    nChannels = n;
+    update();
 }
 
 int ReferenceMatrix::getNumberOfChannels()
 {
-	return nChannels;
+    return nChannels;
 }
 
 void ReferenceMatrix::update()
 {
-	if (nChannels != nChannelsBefore)
-	{
-		if (values != nullptr)
-			delete[] values;
+    if (nChannels != nChannelsBefore)
+    {
+        if (values != nullptr)
+            delete[] values;
 
-		values = new float[nChannels * nChannels];
-		for (int i=0; i<nChannels * nChannels; i++)
-			values[i] = 0;
+        values = new float[nChannels * nChannels];
+        for (int i = 0; i < nChannels * nChannels; i++)
+            values[i] = 0;
 
-		nChannelsBefore = nChannels;
-	}
+        nChannelsBefore = nChannels;
+    }
 }
 
-void ReferenceMatrix::setValue(int rowIndex, int colIndex, float value)
+void ReferenceMatrix::setValue (int rowIndex, int colIndex, float value)
 {
-	if (rowIndex >= 0 && rowIndex < nChannels && colIndex >= 0 && colIndex < nChannels)
-	{
-		values[rowIndex * nChannels + colIndex] = value;
-	}
-	else
-	{
-		std::cout << "RefMatrix::setValue INDEX OUT OF BOUNDS! (rowIndex=" << rowIndex << ", colIndex=" << colIndex << ")" << std::endl;
-	}
+    if (rowIndex >= 0 && rowIndex < nChannels && colIndex >= 0 && colIndex < nChannels)
+    {
+        values[rowIndex * nChannels + colIndex] = value;
+    }
+    else
+    {
+        std::cout << "RefMatrix::setValue INDEX OUT OF BOUNDS! (rowIndex=" << rowIndex << ", colIndex=" << colIndex << ")" << std::endl;
+    }
 }
 
-float ReferenceMatrix::getValue(int rowIndex, int colIndex)
+float ReferenceMatrix::getValue (int rowIndex, int colIndex)
 {
-	float value = -1;
-	if (rowIndex >= 0 && rowIndex < nChannels && colIndex >= 0 && colIndex < nChannels)
-	{
-		value = values[rowIndex * nChannels + colIndex];
-	}
+    float value = -1;
+    if (rowIndex >= 0 && rowIndex < nChannels && colIndex >= 0 && colIndex < nChannels)
+    {
+        value = values[rowIndex * nChannels + colIndex];
+    }
 
-	return value;
+    return value;
 }
 
-float* ReferenceMatrix::getChannel(int index)
+float* ReferenceMatrix::getChannel (int index)
 {
-	if (index >= 0 && index < nChannels)
-		return &values[index * nChannels];
-	else
-		return nullptr;
+    if (index >= 0 && index < nChannels)
+        return &values[index * nChannels];
+    else
+        return nullptr;
 }
 
-bool ReferenceMatrix::allChannelReferencesActive(int index)
+bool ReferenceMatrix::allChannelReferencesActive (int index)
 {
-	float* chan = getChannel(index);
+    float* chan = getChannel (index);
 
-	int nActive = 0;
+    int nActive = 0;
 
-	if (chan != nullptr)
-	{
-		for (int i=0; i<nChannels; i++)
-		{
-			if (chan[i] > 0)
-			{
-				nActive++;
-			}
-		}
-	}
+    if (chan != nullptr)
+    {
+        for (int i = 0; i < nChannels; i++)
+        {
+            if (chan[i] > 0)
+            {
+                nActive++;
+            }
+        }
+    }
 
-	return nActive == nChannels;
+    return nActive == nChannels;
 }
 
-void ReferenceMatrix::setAll(float value)
+void ReferenceMatrix::setAll (float value)
 {
-	if (values != nullptr)
-	{
-		for (int i=0; i<nChannels; i++)
-		{
-			for (int j=0; j<nChannels; j++)
-			{
-				values[i*nChannels + j] = value;
-			}
-		}
-	}
+    if (values != nullptr)
+    {
+        for (int i = 0; i < nChannels; i++)
+        {
+            for (int j = 0; j < nChannels; j++)
+            {
+                values[i * nChannels + j] = value;
+            }
+        }
+    }
 }
 
-void ReferenceMatrix::setAll(float value, int maxChan)
+void ReferenceMatrix::setAll (float value, int maxChan)
 {
-	if (values != nullptr)
-	{
-		maxChan = MIN(nChannels, maxChan);
-		for (int i=0; i<maxChan; i++)
-		{
-			for (int j=0; j<maxChan; j++)
-			{
-				values[i*nChannels + j] = value;
-			}
-		}
-	}
+    if (values != nullptr)
+    {
+        maxChan = MIN (nChannels, maxChan);
+        for (int i = 0; i < maxChan; i++)
+        {
+            for (int j = 0; j < maxChan; j++)
+            {
+                values[i * nChannels + j] = value;
+            }
+        }
+    }
 }
 
 void ReferenceMatrix::clear()
 {
-	if (values != nullptr)
-	{
-		for (int i=0; i<nChannels; i++)
-		{
-			for (int j=0; j<nChannels; j++)
-			{
-				values[i*nChannels + j] = 0;
-			}
-		}
-	}
+    if (values != nullptr)
+    {
+        for (int i = 0; i < nChannels; i++)
+        {
+            for (int j = 0; j < nChannels; j++)
+            {
+                values[i * nChannels + j] = 0;
+            }
+        }
+    }
 }
 
 void ReferenceMatrix::print()
 {
-	for (int i=0; i<nChannels; i++)
-	{
-		float* chan = getChannel(i);
-		for (int j=0; j<nChannels; j++)
-		{
-			std::cout << chan[j] << " ";
-		}
-		std::cout << std::endl;
-	}
-	std::cout << std::endl;
+    for (int i = 0; i < nChannels; i++)
+    {
+        float* chan = getChannel (i);
+        for (int j = 0; j < nChannels; j++)
+        {
+            std::cout << chan[j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }
-

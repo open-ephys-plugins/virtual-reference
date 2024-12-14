@@ -24,13 +24,11 @@
 #ifndef __VIRTUALREF_H__
 #define __VIRTUALREF_H__
 
-
 #include <ProcessorHeaders.h>
 
 #define BUFFER_SIZE 1024
 
 class ReferenceMatrix;
-
 
 /**
 
@@ -47,48 +45,44 @@ class VirtualRef : public GenericProcessor
 
 {
 public:
+    /** Constructor */
+    VirtualRef();
 
-  /** Constructor */
-  VirtualRef();
+    /** Destructor */
+    ~VirtualRef();
 
-  /** Destructor */
-  ~VirtualRef();
+    /** Applys average reference gain from all the selected channels for each input channel*/
+    void process (AudioBuffer<float>& buffer);
 
-  /** Applys average reference gain from all the selected channels for each input channel*/
-  void process(AudioBuffer<float>& buffer);
+    /** Create custom editor*/
+    AudioProcessorEditor* createEditor();
 
-  /** Create custom editor*/
-  AudioProcessorEditor* createEditor();
+    /** Called whenever the signal chain is altered. */
+    void updateSettings();
 
-  /** Called whenever the signal chain is altered. */
-  void updateSettings();
+    /** Gets the reference matrix for current stream */
+    ReferenceMatrix* getReferenceMatrix();
 
-	/** Gets the reference matrix for current stream */
-  ReferenceMatrix* getReferenceMatrix();
+    /** Sets the global gain value */
+    void setGlobalGain (float value);
 
-  /** Sets the global gain value */
-	void setGlobalGain(float value);
+    /** Gets the global gain value */
+    float getGlobalGain();
 
-  /** Gets the global gain value */
-	float getGlobalGain();
+    /** Saves all custom parameters */
+    void saveCustomParametersToXml (XmlElement* parentElement);
 
-	/** Saves all custom parameters */
-  void saveCustomParametersToXml(XmlElement* parentElement);
-
-  /** Loads all custom parameters */
-	void loadCustomParametersFromXml(XmlElement* customParamsXml);
+    /** Loads all custom parameters */
+    void loadCustomParametersFromXml (XmlElement* customParamsXml);
 
 private:
+    std::map<uint16, std::unique_ptr<ReferenceMatrix>> refMatMap;
+    AudioBuffer<float> channelBuffer;
+    AudioBuffer<float> avgBuffer;
+    float globalGain;
 
-	std::map<uint16, std::unique_ptr<ReferenceMatrix>> refMatMap;
-	AudioBuffer<float> channelBuffer;
-	AudioBuffer<float> avgBuffer;
-	float globalGain;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VirtualRef);
-
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VirtualRef);
 };
-
 
 /**
 
@@ -108,55 +102,49 @@ private:
 class ReferenceMatrix
 {
 public:
+    /** Constructor */
+    ReferenceMatrix (int nChan);
 
-    
-  /** Constructor */
-  ReferenceMatrix(int nChan);
+    /** Destructor */
+    ~ReferenceMatrix();
 
-  /** Destructor */
-  ~ReferenceMatrix();
+    /** Set the number of channels for the matrix*/
+    void setNumberOfChannels (int n);
 
-	/** Set the number of channels for the matrix*/
-  void setNumberOfChannels(int n);
+    /** Get the number of channels for the matrix*/
+    int getNumberOfChannels();
 
-  /** Get the number of channels for the matrix*/
-	int getNumberOfChannels();
+    /** Called when the input channels have changed*/
+    void update();
 
-	/** Called when the input channels have changed*/
-  void update();
+    /** Sets the value for the specified row and column */
+    void setValue (int rowIndex, int colIndex, float value);
 
-	/** Sets the value for the specified row and column */
-  void setValue(int rowIndex, int colIndex, float value);
+    /** Gets the value for the specified row and column */
+    float getValue (int rowIndex, int colIndex);
 
-  /** Gets the value for the specified row and column */
-	float getValue(int rowIndex, int colIndex);
+    /** Gets the channel value for the specified index */
+    float* getChannel (int index);
 
-	/** Gets the channel value for the specified index */
-  float* getChannel(int index);
+    /** Checks if all the reference channels are active for the given input channel index */
+    bool allChannelReferencesActive (int index);
 
-  /** Checks if all the reference channels are active for the given input channel index */
-	bool allChannelReferencesActive(int index);
+    /** Sets the value for all reference channels */
+    void setAll (float value);
 
-	/** Sets the value for all reference channels */
-  void setAll(float value);
+    /** Sets the value for all reference channels up to the max channel number*/
+    void setAll (float value, int maxChan);
 
-  /** Sets the value for all reference channels up to the max channel number*/
-	void setAll(float value, int maxChan);
-	
-  /** Clears the reference channel matrix */
-  void clear();
+    /** Clears the reference channel matrix */
+    void clear();
 
-	/** Prints the matrix values*/
-  void print();
+    /** Prints the matrix values*/
+    void print();
 
 private:
-
-	int nChannels;
-	int nChannelsBefore;
-	float* values;
-
+    int nChannels;
+    int nChannelsBefore;
+    float* values;
 };
 
-
-#endif  //__VIRTUALREF_H__
-
+#endif //__VIRTUALREF_H__
