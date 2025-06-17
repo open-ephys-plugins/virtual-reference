@@ -56,12 +56,12 @@ VirtualRefCanvas::VirtualRefCanvas (VirtualRef* n) : processor (n)
     saveButton = std::make_unique<UtilityButton> ("Save");
     saveButton->setRadius (3.0f);
     saveButton->addListener (this);
-    addAndMakeVisible (saveButton.get());
+    //addAndMakeVisible (saveButton.get());
 
     loadButton = std::make_unique<UtilityButton> ("Load");
     loadButton->setRadius (3.0f);
     loadButton->addListener (this);
-    addAndMakeVisible (loadButton.get());
+    //addAndMakeVisible (loadButton.get());
 
     gainSlider = std::make_unique<Slider> ("Gain");
     gainSlider->setLookAndFeel (&lnf4);

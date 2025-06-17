@@ -123,7 +123,7 @@ void VirtualRefEditor::loadParametersDialog()
             VirtualRef* p = dynamic_cast<VirtualRef*> (getProcessor());
             auto fileXml = XmlDocument::parse (fileToOpen);
             p->loadCustomParametersFromXml (fileXml.get());
-            CoreServices::sendStatusMessage ("Loaded channel reference data from file." + fileToOpen.getFullPathName());
+            CoreServices::sendStatusMessage ("Loaded channel reference data from " + fileToOpen.getFullPathName());
         }
     }
     else

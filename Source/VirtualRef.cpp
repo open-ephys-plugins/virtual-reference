@@ -177,6 +177,7 @@ void VirtualRef::loadCustomParametersFromXml (XmlElement* customParamsXml)
     for (auto streamXml : customParamsXml->getChildWithTagNameIterator ("STREAM"))
     {
         uint16 streamID = streamXml->getIntAttribute ("ID");
+        LOGD ("Stream ID: ", streamID);
 
         if (streamID == 0 || refMatMap.find (streamID) == refMatMap.end())
             continue;
