@@ -62,7 +62,7 @@ public:
 
     /** Called when the Visualizer is first created, and optionally when
 		the parameters of the underlying processor are changed */
-    void update();
+    void updateSettings();
 
     /** Respond to button clicks*/
     void buttonClicked (Button* button) override;
@@ -86,8 +86,6 @@ private:
     std::unique_ptr<Label> channelCountLabel;
     StringArray presetNames;
     StringArray channelCounts;
-
-    LookAndFeel_V4 lnf4;
 
     std::unique_ptr<UtilityButton> resetButton;
     std::unique_ptr<UtilityButton> selectModeButton;

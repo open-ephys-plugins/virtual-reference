@@ -64,16 +64,11 @@ VirtualRefCanvas::VirtualRefCanvas (VirtualRef* n) : processor (n)
     //addAndMakeVisible (loadButton.get());
 
     gainSlider = std::make_unique<Slider> ("Gain");
-    gainSlider->setLookAndFeel (&lnf4);
     gainSlider->setTooltip ("Set the global gain value");
     gainSlider->setSliderStyle (Slider::Rotary);
     gainSlider->setRange (0.0f, 2.0f, 0.01f);
     gainSlider->setTextBoxStyle (Slider::TextBoxRight, false, 40, 24);
     gainSlider->setValue (1.0f);
-    gainSlider->setColour (Slider::textBoxBackgroundColourId, Colour (211, 211, 211));
-    gainSlider->setColour (Slider::textBoxTextColourId, Colour (0, 0, 0));
-    gainSlider->setColour (Slider::rotarySliderFillColourId, Colour (240, 179, 12).darker (0.5f));
-    gainSlider->setColour (Slider::thumbColourId, Colour (240, 179, 12));
     gainSlider->addListener (this);
     addAndMakeVisible (gainSlider.get());
 
@@ -130,7 +125,7 @@ void VirtualRefCanvas::endAnimation()
 
 void VirtualRefCanvas::paint (Graphics& g)
 {
-    g.fillAll (Colours::grey);
+    g.fillAll (findColour (ThemeColours::componentBackground));
 }
 
 void VirtualRefCanvas::refresh()
@@ -160,7 +155,7 @@ void VirtualRefCanvas::resized()
     presetNamesBox->setBounds (500, getHeight() - 60, 200, 20);
 }
 
-void VirtualRefCanvas::update()
+void VirtualRefCanvas::updateSettings()
 {
     display->update();
     gainSlider->setValue (processor->getGlobalGain());
@@ -342,7 +337,7 @@ void VirtualRefDisplay::drawTable()
     // Update Editor snapshot image
 
     Image refImage (Image::PixelFormat::RGB, nChannels, nChannels, false);
-    refImage.clear (refImage.getBounds(), Colours::darkgrey);
+    refImage.clear (refImage.getBounds(), findColour (ThemeColours::widgetBackground));
 
     for (int i = 0; i < nChannels; i++)
     {
@@ -352,7 +347,7 @@ void VirtualRefDisplay::drawTable()
 
             if (state)
             {
-                refImage.setPixelAt (j, i, Colours::orange);
+                refImage.setPixelAt (j, i, findColour (ThemeColours::highlightedFill));
             }
         }
     }
@@ -379,7 +374,7 @@ void VirtualRefDisplay::update()
         carButtons.clear();
 
         Image blankImage (Image::PixelFormat::RGB, 95, 95, false);
-        blankImage.clear (blankImage.getBounds(), Colours::darkgrey);
+        blankImage.clear (blankImage.getBounds(), findColour (ThemeColours::widgetBackground));
         VirtualRefEditor* editor = dynamic_cast<VirtualRefEditor*> (processor->getEditor());
         editor->setSnapshot (blankImage);
     }
@@ -419,7 +414,7 @@ void VirtualRefDisplay::setEnableSingleSelectionMode (bool mode)
 
 void VirtualRefDisplay::paint (Graphics& g)
 {
-    g.fillAll (Colours::grey);
+    g.fillAll (findColour (ThemeColours::componentBackground));
 }
 
 void VirtualRefDisplay::buttonClicked (Button* b)
