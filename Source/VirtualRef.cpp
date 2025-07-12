@@ -51,7 +51,7 @@ void VirtualRef::updateSettings()
     {
         int numChannels = (stream->getChannelCount() > 128) ? 128 : stream->getChannelCount();
 
-        refMatMap.emplace (stream->getStreamId(), std::make_unique<ReferenceMatrix> (numChannels));
+        refMatMap.emplace (stream->getKey(), std::make_unique<ReferenceMatrix> (numChannels));
 
         if (editor != nullptr)
         {
@@ -70,7 +70,7 @@ void VirtualRef::process (AudioBuffer<float>& buffer)
             float* ref;
             float refGain;
             int numRefs;
-            int numChan = refMatMap[stream->getStreamId()]->getNumberOfChannels();
+            int numChan = refMatMap[stream->getKey()]->getNumberOfChannels();
 
             channelBuffer = buffer;
 
@@ -78,7 +78,7 @@ void VirtualRef::process (AudioBuffer<float>& buffer)
             {
                 avgBuffer.clear();
 
-                ref = refMatMap[stream->getStreamId()]->getChannel (i);
+                ref = refMatMap[stream->getKey()]->getChannel (i);
                 numRefs = 0;
                 for (int j = 0; j < numChan; j++)
                 {
@@ -124,7 +124,11 @@ void VirtualRef::process (AudioBuffer<float>& buffer)
 
 ReferenceMatrix* VirtualRef::getReferenceMatrix()
 {
-    return refMatMap[getEditor()->getCurrentStream()].get();
+    if (auto stream = getDataStream (getEditor()->getCurrentStream()))
+    {
+        return refMatMap[stream->getKey()].get();
+    }
+    return nullptr;
 }
 
 void VirtualRef::setGlobalGain (float value)
@@ -144,15 +148,15 @@ void VirtualRef::saveCustomParametersToXml (XmlElement* xml)
 
     for (auto stream : getDataStreams())
     {
-        uint16 streamID = stream->getStreamId();
+        String streamKey = stream->getKey();
         XmlElement* streamXml = xml->createNewChildElement ("STREAM");
-        streamXml->setAttribute ("ID", streamID);
+        streamXml->setAttribute ("Key", streamKey);
 
-        int numChannels = refMatMap[streamID]->getNumberOfChannels();
+        int numChannels = refMatMap[streamKey]->getNumberOfChannels();
 
         for (int i = 0; i < numChannels; i++)
         {
-            float* ref = refMatMap[streamID]->getChannel (i);
+            float* ref = refMatMap[streamKey]->getChannel (i);
 
             XmlElement* channelXml = streamXml->createNewChildElement ("CHANNEL");
             channelXml->setAttribute ("Index", i + 1);
@@ -176,13 +180,14 @@ void VirtualRef::loadCustomParametersFromXml (XmlElement* customParamsXml)
 
     for (auto streamXml : customParamsXml->getChildWithTagNameIterator ("STREAM"))
     {
-        uint16 streamID = streamXml->getIntAttribute ("ID");
-        LOGD ("Stream ID: ", streamID);
+        String streamKey = streamXml->getStringAttribute ("Key", String());
 
-        if (streamID == 0 || refMatMap.find (streamID) == refMatMap.end())
+        if (streamKey.isEmpty() || refMatMap.find (streamKey) == refMatMap.end())
             continue;
 
-        refMatMap[streamID]->clear();
+        LOGD ("Loading references for stream: " + streamKey);
+
+        refMatMap[streamKey]->clear();
 
         for (auto channelXml : streamXml->getChildWithTagNameIterator ("CHANNEL"))
         {
@@ -192,7 +197,7 @@ void VirtualRef::loadCustomParametersFromXml (XmlElement* customParamsXml)
             {
                 int refIndex = refXml->getIntAttribute ("Index");
                 float gain = (float) refXml->getDoubleAttribute ("Value");
-                refMatMap[streamID]->setValue (channelIndex - 1, refIndex - 1, gain);
+                refMatMap[streamKey]->setValue (channelIndex - 1, refIndex - 1, gain);
             }
         }
     }

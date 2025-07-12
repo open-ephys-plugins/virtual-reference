@@ -76,7 +76,7 @@ public:
     void loadCustomParametersFromXml (XmlElement* customParamsXml);
 
 private:
-    std::map<uint16, std::unique_ptr<ReferenceMatrix>> refMatMap;
+    std::map<String, std::unique_ptr<ReferenceMatrix>> refMatMap;
     AudioBuffer<float> channelBuffer;
     AudioBuffer<float> avgBuffer;
     float globalGain;
